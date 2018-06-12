@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+config.yml
+demand_*.csv
+Programs/R/output
+Data
+*.lst
+*.lxi
