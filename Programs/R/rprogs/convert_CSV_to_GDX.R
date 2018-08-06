@@ -6,7 +6,8 @@
 ### Date: 19 April 2018                      ##
 ###############################################
 
-convert_CSV_to_GDX <- function(CSV_filename, GMS_filename, GDX_output_filename){
+convert_CSV_to_GDX <- function(CSV_filename, GMS_filepath, GMS_filename, GDX_output_filename){
+  
   x <- paste0(
     "$ontext
 Code for generating demand GDX file from a CSV file
@@ -55,17 +56,19 @@ Execute_Unload '"
   "
   )
   
+  # Switch working directory temporarily to where GMS file is
+  old_wd <- getwd()
+  
+  setwd(GMS_filepath)
+  
   # Write text to gms file
-  fileConn <- file(GMS_filename)
-  write_lines(x, fileConn)
+  # fileConn <- file(GMS_filename)
+  write_lines(x, GMS_filename)
   
   # Run gms file with gams
   gams(GMS_filename)
   
+  # Set working directory back
+  setwd(old_wd)
+  
 }
-
-# convert_CSV_to_GDX(
-#   "P:/Market Analytics/EMI/EMI tools/gemR/i_NrgDemand_df.csv"
-#   , "generate_GEM_GDX.gms"
-#   , "test_i_NrgDemand.gdx"
-# )

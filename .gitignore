@@ -5,6 +5,6 @@
 config.yml
 demand_*.csv
 Programs/R/output
-Data
+Programs/R/rprogs/working
 *.lst
 *.lxi

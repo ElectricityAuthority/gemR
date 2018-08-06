@@ -21,21 +21,21 @@ library(gdxrrw)
 library(DBI)
 
 # Parameters
-demand_year <- 2015
-demand_forecast_file <- "Data/Annual energy forecasts for 180 GXPs, 2012-50, GWh (Dec 2009).csv"
+demand_year <- 2017
+demand_forecast_file <- "Data/annual_energy_forecasts_by_GXP_2012_2050.csv"
 set.seed(12345)
 
 ###############################################
 ### 2. Other setup ############################
 ###############################################
 
-# Set path to GDX API
-igdx("C:/GAMS/win64/25.1")
-
 # Read in config file
 config <- config::get()
 
-# Source functions for converting CSV to GDX
+# Set path to GDX API (using path set in config file)
+igdx(config$gams_dir)
+
+# Source function for converting CSV to GDX
 source("Programs/R/rprogs/convert_CSV_to_GDX.R")
 
 # Create new directories if they don't exist
@@ -57,14 +57,6 @@ channel <- dbConnect(
     "Trusted_Connection=Yes;"
   )
 )
-
-# conn_string <- paste0(
-#   "DRIVER=ODBC Driver 13 for SQL Server;",
-#   "Trusted_Connection=Yes;",
-#   "SERVER=", sql_server_ip_addr 
-# )
-# 
-# channel <- odbcDriverConnect(connection = conn_string)
 
 ###############################################
 ### 3. Read in demand dataset #################
@@ -124,16 +116,16 @@ if(!file.exists(paste0("Programs/R/output/demand_", demand_year, ".csv"))){
 
 # Check if there are 17,520 records for each POC 
 # (i.e. the number of TPs per year)
-count_by_POC <- demand %>% 
-  group_by(poc) %>%
-  count()
+# count_by_POC <- demand %>% 
+#   group_by(poc) %>%
+#   count()
 
-if(nrow(count_by_POC %>% filter(n != 17520)) > 0) { 
-  warning(paste(
-    "The following POCS have less than 17,520 records:",
-    paste((count_by_POC %>% filter(n != 17520))$poc, collapse = ", ")
-  ))
-}
+# if(nrow(count_by_POC %>% filter(n != 17520)) > 0) { 
+#   warning(paste(
+#     "The following POCS have less than 17,520 records:",
+#     paste((count_by_POC %>% filter(n != 17520))$poc, collapse = ", ")
+#   ))
+# }
 
 ###############################################
 ### 4. Plot time series #######################
@@ -209,34 +201,34 @@ ldc <- demand %>%
   ) %>%
   arrange(poc, mn, load_ranked)
 
-# Create national LDC by month
-ldc_national <- demand %>%
-  group_by(y, mn, d, tp) %>%
-  summarise(
-    MWh = sum(MWh)
-  ) %>%
-  ungroup() %>%
-  group_by(mn) %>%
-  mutate(
-    load_ranked = rank(desc(MWh), ties.method = "first")
-  ) %>%
-  arrange(mn, load_ranked)
-
 # Assign load to blocks by POC and month
 ldc_with_load_blocks <- ldc %>%
   group_by(poc, mn) %>%
   mutate(
     lb = assign_blocks(load_ranked)
-    ,month = month(mn, label = TRUE, abbr = FALSE)
+    , month = month(mn, label = TRUE, abbr = FALSE)
   )
 
-# Assign load to blocks nationally by month
-ldc_with_load_blocks_national <- ldc_national %>%
-  group_by(mn) %>%
-  mutate(
-    lb = assign_blocks(load_ranked)
-    ,month = month(mn, label = TRUE, abbr = FALSE)
-  )
+# # Create national LDC by month
+# ldc_national <- demand %>%
+#   group_by(y, mn, d, tp) %>%
+#   summarise(
+#     MWh = sum(MWh)
+#   ) %>%
+#   ungroup() %>%
+#   group_by(mn) %>%
+#   mutate(
+#     load_ranked = rank(desc(MWh), ties.method = "first")
+#   ) %>%
+#   arrange(mn, load_ranked)
+# 
+# # Assign load to blocks nationally by month
+# ldc_with_load_blocks_national <- ldc_national %>%
+#   group_by(mn) %>%
+#   mutate(
+#     lb = assign_blocks(load_ranked)
+#     , month = month(mn, label = TRUE, abbr = FALSE)
+#   )
 
 ###############################################
 ### 6. Plot LDCs ##############################
@@ -279,12 +271,12 @@ ldc_with_load_blocks_sum <- ldc_with_load_blocks %>%
   )
 
 # Sum up load nationally by month and load block
-ldc_with_load_blocks_national_sum <- ldc_with_load_blocks_national %>%
-  group_by(mn, lb) %>%
-  summarise(
-    MWh = sum(MWh)
-    ,count_TPs = n()
-  )
+# ldc_with_load_blocks_national_sum <- ldc_with_load_blocks_national %>%
+#   group_by(mn, lb) %>%
+#   summarise(
+#     MWh = sum(MWh)
+#     ,count_TPs = n()
+#   )
 
 ###############################################
 ### 8. Compute block weights and load share ###
@@ -373,12 +365,16 @@ warning(
 )
 
 ###############################################
-### 10. Map regions to POCs ###################
+### 10. Map POCs to regions ###################
 ###############################################
 
 # Create mapping of POCs to regions
-POC_region_info <- sqlQuery(
-  channel = channel,
+POC_region_info <- dbGetQuery(
+  conn = channel,
+  # sqlQuery(
+  # channel = channel,
+  
+  statement = 
   "
   select 
     PointOfConnectionCode as poc
@@ -410,14 +406,14 @@ load_by_year_timeperiod_lb_region <- load_share_and_block_wt_with_energy_forecas
         ,mn %in% 10:12  ~ "q4"
       )
   ) %>%
-  #Group load by year, region, quarter and load block
+  # Group load by year, region, quarter and load block
   group_by(
     CalendarYear
     , IslandCode
     , quarter
     , lb
   ) %>%
-  #Summarise energy by region
+  # Summarise energy by region
   summarise(
     energy_month_block_GWh = sum(
       energy_month_block_GWh
@@ -438,7 +434,7 @@ i_NrgDemand_df <- load_by_year_timeperiod_lb_region %>%
     , t = quarter
     , Value = energy_month_block_GWh
   ) %>% 
-  #Reorder
+  # Reorder
   select(r, y, t, lb, Value)
 
 # Write CSV
@@ -446,7 +442,8 @@ write_csv(i_NrgDemand_df, "Programs/R/output/i_NrgDemand_df.csv", col_names = FA
 
 # Generate and execute a gms file to convert the CSV to a GDX
 convert_CSV_to_GDX(
-  CSV_filename = "Programs/R/output/i_NrgDemand_df.csv",
-  GMS_filename = "Programs/R/output/generate_GEM_GDX.gms",
-  GDX_output_filename = "Data/i_NrgDemand.gdx"
+  CSV_filename = "i_NrgDemand_df.csv",
+  GMS_filepath = "P:/Market Analytics/EMI/EMI tools/gemR/Programs/R/output",
+  GMS_filename = "generate_GEM_GDX.gms",
+  GDX_output_filename = "../../../Data/i_NrgDemand.gdx"
 )
