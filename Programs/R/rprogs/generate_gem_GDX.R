@@ -26,29 +26,36 @@ demand_forecast_file <- "Data/annual_energy_forecasts_by_GXP_2012_2050.csv"
 set.seed(12345)
 
 ###############################################
-### 2. Other setup ############################
+### 2. Additional setup #######################
 ###############################################
 
-# Read in config file
+# Read in configuration file
 config <- config::get()
 
-# Set path to GDX API (using path set in config file)
+# Set path to GDX API (using path set in configuration file)
 igdx(config$gams_dir)
 
-# Source function for converting CSV to GDX
-source("Programs/R/rprogs/convert_CSV_to_GDX.R")
+# Create time suffix for current run
+time_suffix <- as.character(now()) %>%
+  str_replace_all(" ", "") %>%
+  str_replace_all("\\-", "") %>%
+  str_replace_all(":", "")
 
-# Create new directories if they don't exist
+# Plot 'switches' (i.e. turn on/off plotting)
+plot_ts <- FALSE # Takes approx. 5 minutes to plot all POCs
+plot_LDCs <- FALSE # Takes approx. 13 minutes to plot all POCs
+
+# Create new output directory if it doesn't exist
 if(!dir.exists(paste0("Programs/R/output"))){
   dir.create(paste0("Programs/R/output"))
 }
 
-if(!dir.exists(paste0("Programs/R/output/plots_", demand_year))){
-  dir.create(paste0("Programs/R/output/plots_", demand_year))
+# Create archive folder for current run if it doesn't exist
+if(!dir.exists(paste0("Programs/R/output/Archive_", time_suffix))){
+  dir.create(paste0("Programs/R/output/Archive_", time_suffix))
 }
 
-# Connect to SQL (using credentials set in config file)
-
+# Connect to SQL (using credentials set in configuration file)
 channel <- dbConnect(
   odbc::odbc(),
   .connection_string = paste0(
@@ -62,388 +69,138 @@ channel <- dbConnect(
 ### 3. Read in demand dataset #################
 ###############################################
 
-# Check to see if a demand CSV for the current 'demand_year' already exists.
-# If it does, load it. If it doesn't, pull from SQL (takes approx. 5mins).
+source("Programs/R/rprogs/generate_demand.R")
 
-if(!file.exists(paste0("Programs/R/output/demand_", demand_year, ".csv"))){
-  
-  # Query demand data from SQL DataWarehouse and write to CSV
-  # demand <- sqlQuery(
-  demand <- dbGetQuery(
-    conn = channel,
-    statement = paste0(
-      " 
-      select
-        DIM_DTTM_ID as dttm
-        ,TradingPeriod
-        ,POC as poc
-        ,sum(Val) as kW
-      from 
-        [Wholesale_RM].[cm].[ReconciliationConsumption]
-      where 
-        left(DIM_DTTM_ID, 4) = ",
-      
-      demand_year,
-      
-      " 
-      group by
-        POC
-        , TradingPeriod
-        , DIM_DTTM_ID
-      "
-    )
-  ) %>% 
-    as_tibble() %>%
-    mutate(
-      dttm = ymd_hm(dttm)
-      , y = year(dttm)
-      , mn = month(dttm)
-      , d = day(dttm)
-      , MWh = kW / 2000
-    ) %>%
-    rename(tp = TradingPeriod) %>%
-    select(-kW) %>% 
-    arrange(poc, y, mn, d, tp)
-  
-  # Write to CSV (for later use)
-  write_csv(demand, paste0("Programs/R/output/demand_", demand_year, ".csv"))
-  
-} else {
-  
-  demand <- read_csv(paste0("Programs/R/output/demand_", demand_year, ".csv"))
-  
-}
+# Demand by POC
+## This function looks to see if a demand file already exists for the given demand year.
+## If it doesn't, it generates a demand file using data from reconciled consumption.
+demand_by_POC <- generate_demand(demand_year = demand_year)
 
-# Check if there are 17,520 records for each POC 
-# (i.e. the number of TPs per year)
-# count_by_POC <- demand %>% 
-#   group_by(poc) %>%
-#   count()
-
-# if(nrow(count_by_POC %>% filter(n != 17520)) > 0) { 
-#   warning(paste(
-#     "The following POCS have less than 17,520 records:",
-#     paste((count_by_POC %>% filter(n != 17520))$poc, collapse = ", ")
-#   ))
-# }
+# National demand
+# demand_NZ <- demand %>% 
+#   group_by(dttm, tp, y, mn, d) %>% 
+#   summarise(
+#     MWh = sum(MWh)
+#   ) %>% 
+#   ungroup()
 
 ###############################################
 ### 4. Plot time series #######################
 ###############################################
 
-# # Create directory for ts plots if it doesn't exist
-# if(!dir.exists(paste0("Programs/R/output/plots_", demand_year, "/ts"))){
-#   dir.create(paste0("Programs/R/output/plots_", demand_year, "/ts"))
-# }
-# 
-# # Create time series plots of load by POC
-# pblapply(unique(demand$poc), function(x) {
-#   
-#   p <- demand %>%
-#     filter(poc == x) %>%
-#     ggplot(aes(dttm, MWh)) +
-#     geom_line(alpha = 0.3) +
-#     geom_smooth(se = FALSE, colour = "steelblue") +
-#     theme_bw() +
-#     labs(x = "Date", title = x) +
-#     theme(plot.title = element_text(size = 20, hjust = 0.5))
-#   
-#   # Turn off the geom_smooth message
-#   suppressMessages(
-#     ggsave(paste0("Programs/R/output/plots_", demand_year, "/ts/", x, ".png"))
-#   )
-#   
-# })
+# Plot time series if plotting turned on.
+if(plot_ts == TRUE){
+  
+  source("Programs/R/rprogs/generate_ts_plots.R")
+  
+  # Run generate_ts_plots() function
+  generate_ts_plots(demand_data = demand_by_POC)
+  
+}
 
 ###############################################
 ### 5. Generate load duration curves (LDCs) ### 
 ############################################### 
 
-# Define a 9-block LDC
-b1l <- 1 ## Low wind top block
-b1w <- 3 ## Windy top block
-b2l <- 12 ## Low wind second block
-b2w <- 36 ## Windy second block
-b3l <- 40 ## Low wind third block
-b3w <- 120 ## Windy third block
-# b4 <- ## Fourth block (not assigned here. Gets the residual TPs after assigning all others)
-b5 <- 400 ## Fifth block (i.e. N - 560 to N - 160)
-b6 <- 160 ## Sixth/last block (i.e. the last 160 TPs)
+source("Programs/R/rprogs/generate_LDCs.R")
 
-# Function for assigning load to blocks (based on definition above)
-assign_blocks <- function(x){
-  
-  tmp <- cumsum(c(b1l, b1w, b2l, b2w, b3l, b3w)) 
-  tmp2 <- rev(cumsum(c(length(x), -b6, -b5))) #Note: this goes backwards from the end and the vector is then reversed.
-  
-  tmp3 <- c(tmp, tmp2)
-  
-  case_when(
-    x %in% 0:tmp3[1] ~ "b1l"
-    ,x %in% (tmp3[1] + 1):tmp3[2] ~ "b1w"
-    ,x %in% (tmp3[2] + 1):tmp3[3] ~ "b2l"
-    ,x %in% (tmp3[3] + 1):tmp3[4] ~ "b2w"
-    ,x %in% (tmp3[4] + 1):tmp3[5] ~ "b3l"
-    ,x %in% (tmp3[5] + 1):tmp3[6] ~ "b3w"
-    ,x %in% (tmp3[6] + 1):tmp3[7] ~ "b4"
-    ,x %in% (tmp3[7] + 1):tmp3[8] ~ "b5"
-    ,x %in% (tmp3[8] + 1):tmp3[9] ~ "b6"
-  )
-  
-}
+# Generate LDCs by POC and assign them to load block
+ldc_by_block <- generate_LDCs(demand_data = demand_by_POC, byPOC = TRUE)
 
-# Create LDCs by POC by month
-ldc <- demand %>%
-  select(-dttm) %>%
-  group_by(poc, mn) %>%
-  mutate(
-    load_ranked = rank(desc(MWh), ties.method = "first")
-  ) %>%
-  arrange(poc, mn, load_ranked)
+ldc_by_block_sum <- generate_LDCs_sum(ldc_data = ldc_by_block, byPOC = TRUE)
 
-# Assign load to blocks by POC and month
-ldc_with_load_blocks <- ldc %>%
-  group_by(poc, mn) %>%
-  mutate(
-    lb = assign_blocks(load_ranked)
-    , month = month(mn, label = TRUE, abbr = FALSE)
-  )
-
-# # Create national LDC by month
-# ldc_national <- demand %>%
-#   group_by(y, mn, d, tp) %>%
-#   summarise(
-#     MWh = sum(MWh)
-#   ) %>%
-#   ungroup() %>%
-#   group_by(mn) %>%
-#   mutate(
-#     load_ranked = rank(desc(MWh), ties.method = "first")
-#   ) %>%
-#   arrange(mn, load_ranked)
+# # Generate LDCs nationally and assign them to load block
+# ldc_by_block_NZ <- generate_LDCs(demand_data = demand_NZ, byPOC = FALSE)
 # 
-# # Assign load to blocks nationally by month
-# ldc_with_load_blocks_national <- ldc_national %>%
-#   group_by(mn) %>%
-#   mutate(
-#     lb = assign_blocks(load_ranked)
-#     , month = month(mn, label = TRUE, abbr = FALSE)
-#   )
+# ldc_by_block_sum_NZ <- generate_LDCs_sum(ldc_data = ldc_by_block_NZ, byPOC = FALSE)
 
 ###############################################
 ### 6. Plot LDCs ##############################
 ###############################################
 
-# # Create new LDC plot directory if it doesn't exist
-# if(!dir.exists(paste0("Programs/R/output/plots_", demand_year, "/ldc_with_load_block"))){
-#   dir.create(paste0("Programs/R/output/plots_", demand_year, "/ldc_with_load_block"))
-# }
-# 
-# # Plot LDCs with coloured load blocks
-# pblapply(unique(demand$poc), function(x) {
-#   
-#   p <- ldc_with_load_blocks %>%
-#     filter(poc == x) %>%
-#     ggplot(aes(load_ranked, ymax = MWh, ymin = 0, fill = lb)) +
-#     geom_ribbon(alpha = 0.6) +
-#     theme_bw() +
-#     labs(x = "", y = "MWh", title = paste("LDCs for", x, "with load blocks")) +
-#     theme(plot.title = element_text(size = 15, hjust = 0.5)) +
-#     facet_wrap(~month)
-#   
-#   # Turn off the geom_smooth message
-#   suppressMessages(
-#     ggsave(paste0("Programs/R/output/plots_", demand_year, "/ldc_with_load_block/", x, ".png"), dpi = 450)
-#   )
-#   
-# })
+# Plot LDCs if plotting turned on.
+if(plot_LDCs == TRUE){
+  
+  source("Programs/R/rprogs/generate_LDC_plots.R")
+  
+  # Run generate_LDC_plots() function
+  generate_LDC_plots(ldc_data = ldc_by_block)
+  
+}
 
 ###############################################
-### 7. Aggregate load to load blocks ##########
+### 7. Compute block weights ##################
 ###############################################
 
-# Sum up load by POC, month and load block
-ldc_with_load_blocks_sum <- ldc_with_load_blocks %>%
-  group_by(poc, mn, lb) %>%
-  summarise(
-    MWh = sum(MWh)
-    ,count_TPs = n()
-  )
+source("Programs/R/rprogs/generate_block_weights.R")
 
-# Sum up load nationally by month and load block
-# ldc_with_load_blocks_national_sum <- ldc_with_load_blocks_national %>%
-#   group_by(mn, lb) %>%
-#   summarise(
-#     MWh = sum(MWh)
-#     ,count_TPs = n()
-#   )
+# Generate block weights
+block_weights <- generate_block_weights(ldc_by_block_sum)
 
 ###############################################
-### 8. Compute block weights and load share ###
+### 8. Compute load share #####################
 ###############################################
 
-# BlockWeights - weight of energy by POC, load block and month
-block_weights <- ldc_with_load_blocks_sum %>%
-  group_by(poc, mn) %>%
-  mutate(
-    block_weight = MWh / sum(MWh)
-  ) %>%
-  select(-MWh) %>% 
-  ungroup() %>% 
-  mutate(
-    poc = as.character(poc)
-  )
+source("Programs/R/rprogs/generate_load_share.R")
 
-# LoadShareByMonth - share of annual load by POC and month
-load_share <- ldc_with_load_blocks_sum %>%
-  group_by(poc, mn) %>%
-  summarise(
-    MWh = sum(MWh)
-  ) %>%
-  ungroup() %>%
-  group_by(poc) %>%
-  mutate(
-    load_share = MWh / sum(MWh)
-  ) %>%
-  select(-MWh) %>%
-  ungroup() %>%
-  mutate(
-    poc = as.character(poc)
-  )
+# Generate load share 
+load_share <- generate_load_share(ldc_by_block_sum)
 
 ###############################################
 ### 9. Apportion annual energy forecast #######
 ###############################################
 
-# Read in annual energy forecast dataset (note the use of 'comment = "*"' to skip commented rows)
-annual_energy_forecast <- read_csv(demand_forecast_file, comment = "*")
+source("Programs/R/rprogs/apportion_forecast_load.R")
 
-# Transpose into long dataset
-annual_energy_forecast_long <- annual_energy_forecast %>%
-  gather(poc, energy_GWh, -CalendarYear)
+# Read forecast demand dataset
+forecast_demand <- read_forecast_demand()
 
-# Join annual forecast to load share (note the implicit use of cartesian joining
-# to assign the annual amount to each row of each poc by year)
-load_share_with_energy_forecast <- load_share %>% 
-  left_join(
-    annual_energy_forecast_long
-    , by = "poc"
-  ) %>%
-  #Calculate monthly load by POC by year
-  mutate(
-    energy_month_GWh = energy_GWh * load_share
-  ) %>%
-  #Drop annual energy amount and load share weights
-  select(-c(energy_GWh, load_share)) %>% 
-  arrange(poc, CalendarYear, mn) %>% 
-  filter(!is.na(energy_month_GWh))
-
-warning(
-  "Current demand forecast file used in development only has 180 POCs. 
-Temporarily dropping those records that don't have forecast values."
+# Join annual forecast with load share and apportion national demand by POC and month
+forecast_by_load_share <- forecast_by_load_share(
+  load_share_dataset = load_share
+  , forecast_dataset = forecast_demand
 )
 
-# Join on block weights to apportion further (note the implicit use of cartesian joining
-# to assign the monthly amount to each row of each poc by load block)
-load_share_and_block_wt_with_energy_forecast <- block_weights %>%
-  select(-count_TPs)  %>%
-  left_join(
-    load_share_with_energy_forecast
-    , by = c("poc", "mn")
-  ) %>%
-  #Calculate load per POC, month and load block
-  mutate(
-    energy_month_block_GWh = energy_month_GWh * block_weight
-  ) %>%
-  #Drop monthly energy amount and block weights
-  select(-c(energy_month_GWh, block_weight)) %>% 
-  filter(!is.na(energy_month_block_GWh))
-
-warning(
-  "Current demand forecast file used in development only has 180 POCs. 
-  Temporarily dropping those records that don't have forecast values."
+# Join above dataset with block weights data and apportion demand within each year, 
+# POC and month using block weights
+forecast_by_load_share_blockwt <- forecast_by_load_share_blockwt(
+  block_weight_dataset = block_weights
+  , load_share_forecast_dataset = forecast_by_load_share
 )
 
 ###############################################
-### 10. Map POCs to regions ###################
+### 10. Map POCs to regions ####################
 ###############################################
+
+source("Programs/R/rprogs/map_POCS_to_regions.R")
+
+# Read concordance of POCS to region from SQL
+POC_region_concordance <- POC_region_concordance()
 
 # Create mapping of POCs to regions
-POC_region_info <- dbGetQuery(
-  conn = channel,
-  # sqlQuery(
-  # channel = channel,
-  
-  statement = 
-  "
-  select 
-    PointOfConnectionCode as poc
-    , IslandCode
-    , GridZoneDescription
-  from 
-    [DataWarehouse].[common].[DimPointOfConnection]
-  "
-) %>%
-  as_tibble() %>%
-  mutate(
-    poc = as.character(poc)
-  ) %>% 
-  arrange(poc)
-
-# Join region on to energy forecast table and generate quarters from months
-load_by_year_timeperiod_lb_region <- load_share_and_block_wt_with_energy_forecast %>%
-  left_join(
-    POC_region_info,
-    by = "poc"
-  ) %>%
-  mutate(
-    IslandCode = tolower(IslandCode)
-    ,quarter = 
-      case_when(
-        mn %in% 1:3    ~ "q1"  
-        ,mn %in% 4:6    ~ "q2"
-        ,mn %in% 7:9    ~ "q3"
-        ,mn %in% 10:12  ~ "q4"
-      )
-  ) %>%
-  # Group load by year, region, quarter and load block
-  group_by(
-    CalendarYear
-    , IslandCode
-    , quarter
-    , lb
-  ) %>%
-  # Summarise energy by region
-  summarise(
-    energy_month_block_GWh = sum(
-      energy_month_block_GWh
-      , na.rm = TRUE
-    )
-  ) %>% 
-  ungroup()
+forecast_by_region_qtr <- forecast_by_region_qtr(
+  forecast_dataset = forecast_by_load_share_blockwt
+  , region_concordance_dataset = POC_region_concordance
+)
 
 ###############################################
 ### 11. Output to GDX #########################
 ###############################################
 
-# Create final dataframe with required names
-i_NrgDemand_df <- load_by_year_timeperiod_lb_region %>% 
-  rename(
-    r = IslandCode
-    , y = CalendarYear
-    , t = quarter
-    , Value = energy_month_block_GWh
-  ) %>% 
-  # Reorder
-  select(r, y, t, lb, Value)
+source("Programs/R/rprogs/convert_CSV_to_GDX.R")
 
-# Write CSV
-write_csv(i_NrgDemand_df, "Programs/R/output/i_NrgDemand_df.csv", col_names = FALSE)
+final_file_name <- paste0("i_NrgDemand_", time_suffix)
 
-# Generate and execute a gms file to convert the CSV to a GDX
+# Create final dataframe with required names. Output to CSV.
+create_final_CSV(
+  input_dataset = forecast_by_region_qtr
+    , CSV_output_filename = paste0(final_file_name, ".csv")
+)
+
+# Generate and execute the gms file to convert the CSV to a GDX
 convert_CSV_to_GDX(
-  CSV_filename = "i_NrgDemand_df.csv",
-  GMS_filepath = "P:/Market Analytics/EMI/EMI tools/gemR/Programs/R/output",
+  CSV_filename = paste0(final_file_name, ".csv"),
+  GMS_filepath = paste0("P:/Market Analytics/EMI/EMI tools/gemR/Programs/R/output/Archive_", time_suffix),
   GMS_filename = "generate_GEM_GDX.gms",
-  GDX_output_filename = "../../../Data/i_NrgDemand.gdx"
+  GDX_output_filename = paste0("../../../../Data/", final_file_name, ".gdx")
 )

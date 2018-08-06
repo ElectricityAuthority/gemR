@@ -6,6 +6,24 @@
 ### Date: 19 April 2018                      ##
 ###############################################
 
+# Create final dataframe with required names
+create_final_CSV <- function(input_dataset, CSV_output_filename){
+  
+  # Create final dataframe with required names
+  input_dataset %>% 
+    rename(
+      r = IslandCode
+      , y = CalendarYear
+      , t = quarter
+      , Value = energy_month_block_GWh
+    ) %>% 
+    # Reorder columns
+    select(r, y, t, lb, Value) %>% 
+    # Write CSV
+    write_csv(paste0("Programs/R/output/Archive_", time_suffix, "/", CSV_output_filename), col_names = FALSE)
+  
+}
+
 convert_CSV_to_GDX <- function(CSV_filename, GMS_filepath, GMS_filename, GDX_output_filename){
   
   x <- paste0(
