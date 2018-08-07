@@ -19,6 +19,7 @@ library(foreach)
 library(pbapply)
 library(gdxrrw)
 library(DBI)
+library(log4r)
 
 # Parameters
 demand_year <- 2017
@@ -54,6 +55,15 @@ if(!dir.exists(paste0("Programs/R/output"))){
 if(!dir.exists(paste0("Programs/R/output/Archive_", time_suffix))){
   dir.create(paste0("Programs/R/output/Archive_", time_suffix))
 }
+
+# Create a new logger object
+logger <- create.logger()
+
+# Set logfile location
+logfile(logger) <- paste0("Programs/R/output/Archive_", time_suffix, "/log_", time_suffix, ".log")
+
+# Set the current level of the logger.
+level(logger) <- 'INFO' 
 
 # Connect to SQL (using credentials set in configuration file)
 channel <- dbConnect(
@@ -169,7 +179,7 @@ forecast_by_load_share_blockwt <- forecast_by_load_share_blockwt(
 )
 
 ###############################################
-### 10. Map POCs to regions ####################
+### 10. Map POCs to regions ###################
 ###############################################
 
 source("Programs/R/rprogs/map_POCS_to_regions.R")

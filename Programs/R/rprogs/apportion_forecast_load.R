@@ -37,8 +37,9 @@ forecast_by_load_share <- function(load_share_dataset, forecast_dataset){
     arrange(poc, CalendarYear, mn) %>% 
     filter(!is.na(energy_month_GWh))
   
-  warning(
-    "Current demand forecast file used in development only has 180 POCs. 
+  warn(
+    logger
+    , "Current demand forecast file used in development only has 180 POCs. 
     Temporarily dropping those records that don't have forecast values."
   )
   
@@ -64,8 +65,9 @@ forecast_by_load_share_blockwt <- function(block_weight_dataset, load_share_fore
     select(-c(energy_month_GWh, block_weight)) %>% 
     filter(!is.na(energy_month_block_GWh))
   
-  warning(
-    "Current demand forecast file used in development only has 180 POCs. 
+  warn(
+    logger
+    , "Current demand forecast file used in development only has 180 POCs. 
   Temporarily dropping those records that don't have forecast values."
   )
   
