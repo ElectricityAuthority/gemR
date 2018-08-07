@@ -80,7 +80,6 @@ Execute_Unload '"
   setwd(GMS_filepath)
   
   # Write text to gms file
-  # fileConn <- file(GMS_filename)
   write_lines(x, GMS_filename)
   
   # Run gms file with gams

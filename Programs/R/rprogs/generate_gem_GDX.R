@@ -13,7 +13,6 @@
 # Libraries
 library(tidyverse)
 library(lubridate)
-# library(RODBC)
 library(ggthemes)
 library(foreach)
 library(pbapply)
@@ -41,6 +40,9 @@ time_suffix <- as.character(now()) %>%
   str_replace_all(" ", "") %>%
   str_replace_all("\\-", "") %>%
   str_replace_all(":", "")
+
+# Set scenario suffix
+scenario_suffix <- "2Region9LB_Standard"
 
 # Plot 'switches' (i.e. turn on/off plotting)
 plot_ts <- FALSE # Takes approx. 5 minutes to plot all POCs
@@ -199,7 +201,7 @@ forecast_by_region_qtr <- forecast_by_region_qtr(
 
 source("Programs/R/rprogs/convert_CSV_to_GDX.R")
 
-final_file_name <- paste0("i_NrgDemand_", time_suffix)
+final_file_name <- paste0("NRG_", scenario_suffix)
 
 # Create final dataframe with required names. Output to CSV.
 create_final_CSV(
