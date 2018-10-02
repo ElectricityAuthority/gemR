@@ -195,6 +195,8 @@ forecast_by_region_qtr <- forecast_by_region_qtr(
   , region_concordance_dataset = POC_region_concordance
 )
 
+# TODO: Regions - use GridZones from [DataWarehouse].[common].[DimPointOfConnection] but split Tiwai out from Southland
+
 ###############################################
 ### 11. Output to GDX #########################
 ###############################################
