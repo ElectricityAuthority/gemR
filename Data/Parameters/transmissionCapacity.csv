@@ -1,0 +1,9 @@
+r,rr,ps,i_txCapacity,i_txCapacityPO,i_txResistance,i_txReactance
+ni,si,initial,626,,4.40E-05,0.003
+ni,si,upgr1,1000,300,4.40E-05,0.004
+ni,si,upgr2,1000,300,4.40E-05,0.005
+ni,si,upgr3,1000,300,4.40E-05,0.006
+si,ni,initial,970,270,4.40E-05,0.003
+si,ni,upgr1,1000,300,4.40E-05,0.004
+si,ni,upgr2,1200,500,4.40E-05,0.005
+si,ni,upgr3,1400,700,4.40E-05,0.006

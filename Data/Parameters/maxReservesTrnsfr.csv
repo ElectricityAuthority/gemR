@@ -1,0 +1,11 @@
+r,rr,ps,rc,i_maxReservesTrnsfr
+ni,si,initial,rc1,250
+ni,si,upgr1,rc1,250
+ni,si,upgr2,rc1,250
+ni,si,upgr3,rc1,250
+ni,si,upgr4,rc1,250
+si,ni,initial,rc1,250
+si,ni,upgr1,rc1,250
+si,ni,upgr2,rc1,250
+si,ni,upgr3,rc1,250
+si,ni,upgr4,rc1,250
