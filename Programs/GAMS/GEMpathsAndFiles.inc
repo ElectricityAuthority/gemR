@@ -11,9 +11,10 @@ $setglobal runVersionRGB   "255.0.255"
 * mds4 'Coal'               0.0.0
 * mds5 'High gas discovery' 255.0.255
 
-$setglobal GEMinputGDX     "standardGEMinput9LB.gdx"
-$setglobal GEMnetworkGDX   "2RegionNetwork.gdx"
-$setglobal GEMdemandGDX    "NRG_2Region9LB_Standard.gdx"
+$setglobal GEMinputGDX     "GEMData_2Region9LB_Standard.gdx"
+*$setglobal GEMinputGDX     "standardGEMinput9LB.gdx"
+*$setglobal GEMnetworkGDX   "2RegionNetwork.gdx"
+*$setglobal GEMdemandGDX    "NRG_2Region9LB_Standard.gdx"
 
 *$setglobal GEMoverrideGDX  "mds5_Override.gdx"
 
@@ -25,7 +26,8 @@ $setglobal Mode             0
 $setglobal GRscheduleRead   0
 
 $setglobal ProgPath        "%system.fp%"
-$setglobal DataPath        "%system.fp%..\..\Data\"
+*$setglobal DataPath        "%system.fp%..\..\Data\GDX_old\"
+$setglobal DataPath        "%system.fp%..\R\output\Archive_20181116162136\"
 $setglobal OutPath         "%system.fp%..\..\Output\"
 
 * Set LogMode to 0 if it hasn't already been set to 1 via invocation, e.g. gams GEMsolve --LogMode=1

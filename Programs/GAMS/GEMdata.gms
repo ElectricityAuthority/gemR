@@ -1,28 +1,28 @@
 * GEMdata.gms
 
 
-* Last modified by Dr Phil Bishop, 01/06/2012 (imm@ea.govt.nz)
+* Last modified by Dr Phil Bishop, 21/04/2016 (emi@ea.govt.nz)
 
 
 $ontext
-  This program prepares the data for a single run version of GEM. Note that a GEM run version may comprise many experiments and
-  scenarios. Note too that one or many run versions comprise a GEM run. GEMdata imports the input data from GDX files, undertakes
+  This program prepares the data for a single run version of GEM. A GEM run version may comprise many experiments and scenarios.
+  Note too that one or many run versions comprise a GEM run. GEMdata imports the input data from GDX files, undertakes
   some manipulations/transformations, and performs integrity checks. It finishes by writing out some input data summary tables.
 
-  The GEMdata invocation requires GEMdata to be restarted from the GEMdeclarations work file (GEMdeclarations.g00). The files
-  called GEMpathsAndFiles.inc, GEMsettings.inc and GEMstochastic.inc are included into GEMdata. The GEMdata work file is saved
-  and used to start GEMsolve. GEMsolve is invoked immediately after GEMdata and from the same 'runGEM...' script.
+  The GEMdata invocation (see runGEMdataAndSolve.gms) requires GEMdata to be restarted from the GEMdeclarations work file
+  (GEMdeclarations.g00). The files called GEMpathsAndFiles.inc, GEMsettings.inc and GEMstochastic.inc are included into GEMdata.
+  The GEMdata work file is saved and used to start GEMsolve. GEMsolve is invoked immediately after GEMdata and from the same
+  'runGEMdataAndSolve.gms' script.
 
-  Notes:
+  TODO:
   1. The override structure needs to be generalised to work with any number of input parameters - perhaps even all of them? Also,
      when this takes place, the override declarations need to be moved into GEMdeclarations.
-  2. See "File rawData 'GEM input data'" The creation of this file needs to be completed. Symbols need to be group together in a
+  2. See "File rawData 'GEM input data'" The creation of this file needs to be completed. Symbols need to be grouped together in a
      sensible order. The generated output needs to be checked for reliability. Some symbols, such as i_inflexiblePlantFactor(g,lb),
      are not yet written out.
-  3. Need to update and make current the display statement in code section 5.
-  4. Code section (6)(d) - some info from GEMsettings and elsewhere(?) not yet written or its no longer relevant.
-  5. Some transmission-related data is yet to be written into transmission input data summary file - see code section (6)(e). 
-  6. ...
+  3. Need to update and make current the display statement in code section 6.
+  4. Code section (7)(d) - some info from GEMsettings and elsewhere(?) not yet written or it's no longer relevant.
+  5. Some transmission-related data is yet to be written into transmission input data summary file - see code section (7)(e). 
 
  Code sections:
   1. Take care of a few preliminaries.
@@ -36,7 +36,7 @@ $ontext
      f) Reserve energy data.
      g) Non-free reserves
      h) Create set of VOLL plant - one per region.
-  4. Prepare the scenario-dependent input data; key user-specified settings are obtained from GEMstochastic.inc.
+  4. Prepare the scenario-dependent input data. Key user-specified settings are obtained from GEMstochastic.inc.
   5. Ascertain which dispatch solves ought to be summed and averaged for reporting purposes...
   6. Display sets and parameters.
   7. Create input data summaries.
@@ -48,7 +48,7 @@ $ontext
      f) Write the plant data summaries.
      g) Write the capex statistics.
      h) Write the load summaries.
-     i) Include code to compute and write out LRMC of all non-existing plant.
+  8. Include code to compute and write out LRMC of all non-existing plant.
 $offtext
 
 
@@ -63,8 +63,9 @@ $offtext
 *option profile = 3 ;
 
 option seed = 101 ;
-$include GEMpathsAndFiles.inc
-$include GEMsettings.inc
+*$include GEMpathsAndFiles.inc
+*$include GEMsettings.inc
+$include GEMsetup.inc
 
 * Turn the following on/off as desired.
 $offupper onempty inlinecom { } eolcom !
@@ -90,9 +91,23 @@ bat.ap = 0 ;
 
 
 *===============================================================================================
-* 2. Load data that comes from the 3 input GDX files and/or the override files (also from GEMsettings for set y).
+* 2. Load data that comes from the 3 input GDX files and/or the override files (also from GEMsettings, in the case of set y).
 *    NB: Some symbols in the input GDX files are defined on years that may extend beyond %firstYear% and %lastYear%.
 *        Hence, those symbols must be loaded without domain checking, i.e. $load c.f. $loaddc.
+
+* Previously in GEMdeclarations
+Sets
+ild                                           'Islands'                             / ni         'North Island'
+                                                                                        si         'South Island' /
+aggR                                          'Aggregate regional entities'         / ni         'North Island'
+                                                                                        si         'South Island'
+                                                                                        nz         'New Zealand' /
+;
+
+Parameters                                                                                        
+largestNIplant                                "Get this from the peak security data - but you can't have it vary by year"   / 385 /
+largestSIplant                                "Get this from the peak security data - but you can't have it vary by year"   / 125 /
+;
 
 Set y  / %firstYear% * %lastYear% / ;
 
@@ -122,22 +137,23 @@ $loaddc i_ReserveSwitch i_ReserveAreas i_propWindCover i_ReservePenalty
 $load   i_reserveReqMW i_winterCapacityMargin i_SIACrisk i_fkSI i_fkNI i_HVDClossesAtMaxXfer i_largestGenerator i_P200ratioNZ i_P200ratioNI
 $load   i_firstHydroYear i_historicalHydroOutput
 
-$gdxin "%DataPath%\%GEMnetworkGDX%"
+*$gdxin "%DataPath%\%GEMnetworkGDX%"
 * Sets
 $loaddc r p ps tupg mapLocations regionCentroid txUpgradeTransitions mapArcNode
 * Parameters 
 $loaddc i_txCapacity i_txCapacityPO i_txResistance i_txReactance i_maxReservesTrnsfr
 $loaddc i_txCapitalCost i_txEarlyComYr i_txFixedComYr i_txGrpConstraintsLHS i_txGrpConstraintsRHS
 
-$gdxin "%DataPath%\%GEMdemandGDX%"
+*$gdxin "%DataPath%\%GEMdemandGDX%"
 $load   i_NrgDemand
+
 
 * Initialise set 'n' and record the number of loss tranches - %NumVertices% comes from GEMsettings.inc.
 Set n 'Piecewise linear vertices' / n1 * n%NumVertices% / ;
 numT = %NumVertices% - 1 ; ;
 
 * Install data overrides.
-** mds1, mds2 and mds5 override 3 params: i_fuelPrices, i_fuelQuantities and i_co2tax. mds4 overrides just 1 param: i_co2tax.
+* Override GDXs must contain symbnols for i_fuelPrices, i_fuelQuantities, i_co2tax, i_FixComYr and i_EarlyComYr - even if empty.
 $if %useOverrides%==0 $goto noOverrides2
 
 Parameters
@@ -145,15 +161,20 @@ Parameters
   i_fuelQuantitiesOvrd(f,y)       'Quantitative limit on availability of various fuels by year, PJ'
   i_co2taxOvrd(y)                 'CO2 tax by year, $/tonne CO2-equivalent'
   i_FixComYrOvrd(g)               'Fixed commissioning year for potentially new generation plant (includes plant fixed never to be built)'
+  i_EarlyComYrOvrd(g)             'Earliest possible commissioning year for each potentially new generation plant'
+  i_ExogenousRetireYrOvrd(g)      'Exogenous retirement year for generation plant'
   ;
 
 $gdxin "%DataPath%\%GEMoverrideGDX%"
-$load   i_fuelPricesOvrd i_fuelQuantitiesOvrd i_co2taxOvrd i_FixComYrOvrd
-i_fuelPrices(f,y)$i_fuelPricesOvrd(f,y) = i_fuelPricesOvrd(f,y) ;              i_fuelPrices(f,y)$( i_fuelPrices(f,y) = eps ) = 0 ;
-i_fuelQuantities(f,y)$i_fuelQuantitiesOvrd(f,y) = i_fuelQuantitiesOvrd(f,y) ;  i_fuelQuantities(f,y)$( i_fuelQuantities(f,y) = eps ) = 0 ;
-i_co2tax(y)$i_co2taxOvrd(y) = i_co2taxOvrd(y) ;                                i_co2tax(y)$( i_co2tax(y) = eps ) = 0 ; 
-i_FixComYr(g)$i_FixComYrOvrd(g) = i_FixComYrOvrd(g) ;                          i_FixComYr(g)$( i_FixComYr(g) = eps ) = 0 ; 
+$load   i_fuelPricesOvrd i_fuelQuantitiesOvrd i_co2taxOvrd i_FixComYrOvrd i_EarlyComYrOvrd i_ExogenousRetireYrOvrd
+i_fuelPrices(f,y)$i_fuelPricesOvrd(f,y) = i_fuelPricesOvrd(f,y) ;                 i_fuelPrices(f,y)$( i_fuelPrices(f,y) = eps ) = 0 ;
+i_fuelQuantities(f,y)$i_fuelQuantitiesOvrd(f,y) = i_fuelQuantitiesOvrd(f,y) ;     i_fuelQuantities(f,y)$( i_fuelQuantities(f,y) = eps ) = 0 ;
+i_co2tax(y)$i_co2taxOvrd(y) = i_co2taxOvrd(y) ;                                   i_co2tax(y)$( i_co2tax(y) = eps ) = 0 ; 
+i_FixComYr(g)$i_FixComYrOvrd(g) = i_FixComYrOvrd(g) ;                             i_FixComYr(g)$( i_FixComYr(g) = eps ) = 0 ; 
+i_EarlyComYr(g)$i_EarlyComYrOvrd(g) = i_EarlyComYrOvrd(g) ;                       i_EarlyComYr(g)$( i_EarlyComYr(g) = eps ) = 0 ; 
+i_ExogenousRetireYr(g)$i_ExogenousRetireYrOvrd(g) = i_ExogenousRetireYrOvrd(g) ;  i_ExogenousRetireYr(g)$( i_ExogenousRetireYr(g) = eps ) = 0 ; 
 $label noOverrides2
+
 
 * Create a CSV file of input data, including overrides - unadulterated and just as imported.
 File rawData 'GEM input data' / "%OutPath%\%runName%\Input data checks\Raw GEM input data - %runName%_%runVersionName%.csv" / ;
@@ -259,9 +280,11 @@ loop(maplocations(i,r,e,ild),
 mapAggR_r('nz',r) = yes ;
 mapAggR_r('ni',r) = yes$sum(mapild_r('ni',r), 1) ;
 mapAggR_r('si',r) = yes$sum(mapild_r('si',r), 1) ;
+
 * Figure out if there are just 2 regions and whether their names are identical to the names of the 2 islands.
 loop(mapild_r(ild,r)$( sameas(r,'ni') or sameas(r,'si') ), isIldEqReg(ild,r) = yes ) ;
 isIldEqReg(ild,r)$( card(isIldEqReg) <> 2 ) = no ;
+
 * Generation plant mappings
 loop(mapgenplant(g,k,i,o),
   mapg_k(g,k) = yes ;
@@ -272,10 +295,12 @@ mapg_f(g,f)     = yes$sum(mapg_k(g,k), mapf_k(f,k) ) ;
 mapg_r(g,r)     = yes$sum(mapg_i(g,i), mapi_r(i,r) ) ;
 mapg_e(g,e)     = yes$sum(mapg_i(g,i), mapi_e(i,e) ) ;
 mapg_ild(g,ild) = yes$sum(mapg_r(g,r), mapild_r(ild,r) ) ;
+
 * Reservoir mappings
 loop(mapreservoirs(v,i,g),
   mapv_g(v,g) = yes ;
 ) ;
+
 * Fuel mappings
 loop((f,fg,thermalTech(k))$( mapf_fg(f,fg) * mapf_k(f,k) ), thermalFuel(f) = yes ) ;
 
@@ -349,6 +374,7 @@ noExist(g)$( i_nameplate(g) = 0 ) = no ;
 neverBuild(noExist(g))$( (i_fixComYr(g) > lastYear) or (i_EarlyComYr(g) > lastYear) ) = yes ;
 neverBuild(g)$( i_nameplate(g) <= 0 ) = yes ;
 
+
 * v) Define committed plant. To be a committed plant, the plant must not exist, it must not be in the neverBuild set, and
 * it must have a fixed commissioning year that is greater than or equal to the first modelled year.
 commit(noExist(g))$( (i_fixComYr(g) >= firstYear) * (not neverBuild(g)) ) = yes ;
@@ -399,6 +425,9 @@ sigen(g)$mapg_ild(g,'si') = yes ;  sigen(neverBuild(g)) = no ;
 * will be in the commit(g) and noExist(g) sets.
 initialCapacity(exist(g)) = i_nameplate(g) ;
 
+* Calculate MW able to be built by technology, region and year.
+*MWtoBuildByRegTechYr(k,r,y) = sum(g$( validYrBuild(g,y) * possibleToBuild(g) * mapg_k(g,k) * mapg_r(g,r) ), i_nameplate(g)) ;
+
 * Define exogenously retired MW by plant and year.
 exogMWretired(g,y)$( i_ExogenousRetireYr(g) * ( yearNum(y) = i_ExogenousRetireYr(g) ) ) = i_nameplate(g) ;
 
@@ -418,12 +447,16 @@ WtdAvgFOFmultiplier(k,lb) = sum(t, hoursPerBlock(t,lb) * i_FOFmultiplier(k,lb)) 
 * Derive the minimum and maximum capacity factors for each plant and period.
 * First average over time (i.e. over the months mapped to each period t) and assign to maxCapFactPlant.
 maxCapFactPlant(g,t,lb)$sum(mapm_t(m,t), 1) = sum(mapm_t(m,t), i_PltCapFact(g,m) ) / sum(mapm_t(m,t), 1) ;
+
 * Then, set all scheduable hydro max capacity factors to zero.
 loop(mapg_k(g,hydroSched(k)), maxCapFactPlant(g,t,lb) = 0 ) ;
+
 * Now, overwrite max capacity factor for hydro with user-defined, non-zero i_maxHydroCapFact(g) values.
 maxCapFactPlant(g,t,lb)$i_maxHydroCapFact(g) = i_maxHydroCapFact(g) ;
+
 * Now adjust all max capacity factors for forced outage factor.
 maxCapFactPlant(g,t,lb) = maxCapFactPlant(g,t,lb) * sum(mapg_k(g,k), (1 - i_fof(g) * WtdAvgFOFmultiplier(k,lb)) ) ;
+
 * Min capacity factor only meaningfully defined for hydro units.
 minCapFactPlant(schedHydroPlant(g),y,t) = i_minHydroCapFact(g) ;
 * But it is also 'non-meaningfully' defined to a low non-zero value for wind plant.
@@ -461,7 +494,6 @@ loop(randomiseCapex(k),
   uniform( (capexPlant(g) - randomCapexCostAdjuster * capexPlant(g)),(capexPlant(g) + randomCapexCostAdjuster * capexPlant(g)) ) ;
 ) ;
 
-
 * Zero out any refubishment capex costs if the plant is not actually a candidate for refurbishment.
 refurbCapexPlant(g)$( not possibleToRefurbish(g) ) = 0 ;
 
@@ -474,7 +506,6 @@ capCharge(g,y)       = capexPlant(g) * sum(mapg_k(g,k), capRecFac(y,k,'genplt'))
 refurbCapCharge(g,y) = refurbCapexPlant(g) * sum(mapg_k(g,k), capRecFac(y,k,'refplt')) ;
 refurbCapCharge(g,y)$( yearNum(y) < i_refurbDecisionYear(g) ) = 0 ;
 refurbCapCharge(g,y)$( yearNum(y) > i_refurbDecisionYear(g) + sum(mapg_k(g,k), i_refurbishmentLife(k)) ) = 0 ;
-
 
 * Calculate reserve capability per generating plant.
 reservesCapability(g,rc)$i_plantReservesCap(g,rc) = i_nameplate(g) * i_plantReservesCap(g,rc) ;
@@ -521,8 +552,10 @@ i_txEarlyComYr(tupg)$( i_txEarlyComYr(tupg) = 0 ) = firstYear ;
 i_txEarlyComYr(tupg)$sameas(tupg,'exist') = 0 ;
 
 * Make sure intraregional capacities and line characteristics are zero.
-i_txCapacity(r,r,ps) = 0 ;    i_txCapacityPO(r,r,ps) = 0 ;
-i_txResistance(r,r,ps) = 0 ;  i_txReactance(r,r,ps) = 0 ;
+i_txCapacity(r,r,ps) = 0 ;
+i_txCapacityPO(r,r,ps) = 0 ;
+i_txResistance(r,r,ps) = 0 ;
+i_txReactance(r,r,ps) = 0 ;
 
 * Assign allowable transitions from one transmission state to another.
 transitions(tupg,r,rr,ps,pss) = txUpgradeTransitions(tupg,r,rr,ps,pss) ;
@@ -650,9 +683,7 @@ lossSlopeMIP(paths,ps,n)$lossSlopeMIP(paths,ps,n) = lossSlopeRMIP(paths,n) ;
 
 * f) Reserve energy data.
 reservesAreas(rc) = min(2, max(1, i_ReserveAreas(rc) ) ) ;
-
 singleReservesReqF(rc)$( reservesAreas(rc) = 1 ) = 1 ;
-
 penaltyViolateReserves(ild,rc) = max(0, i_ReservePenalty(ild,rc) ) ;
 
 windCoverPropn(rc) = min(1, max(0, i_propWindCover(rc) ) ) ;
@@ -702,7 +733,7 @@ put VOLLplant
 
 
 *===============================================================================================
-* 4. Prepare the scenario-dependent input data; key user-specified settings are obtained from GEMstochastic.inc.
+* 4. Prepare the scenario-dependent input data. Key user-specified settings are obtained from GEMstochastic.inc.
 
 $include GEMstochastic.inc
 
@@ -779,10 +810,9 @@ loop(figureOutAvgDispatch(experiments,steps,scenSet,scenarios,hydroSeqTypes,hY),
 *===============================================================================================
 * 6. Display sets and parameters.
 
-$ontext 
-
 ** This piece of code has not kept pace with all the changes to GEMdata.
 
+$ontext 
 Display
 * Sets
 * Time/date-related sets and parameters.
@@ -1107,7 +1137,8 @@ put plantData, 'Plant data summarised (default scenario only) - based on user-su
   '  South Island'                      @38 put sum(mapg_ild(g,'si')$possibleToBuild(g), 1):<4:0 /
   'MW able to be built:' /
   '  North Island'                      @38 put sum(mapg_ild(g,'ni')$possibleToBuild(g), i_nameplate(g)):<6:0 /
-  '  South Island'                      @38 put sum(mapg_ild(g,'si')$possibleToBuild(g), i_nameplate(g)):<6:0 //
+  '  South Island'                      @38 put sum(mapg_ild(g,'si')$possibleToBuild(g), i_nameplate(g)):<6:0 /
+  '  See bottom of file for MW by technology, region and year' //
 
   'VoLL plant (NB: one VOLL plant per region; not included in count of generating plant above)' /
   'Count:'                              @38 card(r):<4:0 /
@@ -1190,6 +1221,11 @@ loop((k,g)$( (not exist(g)) and mapg_k(g,k) ),
   loop(mapg_r(g,r), put r.tl ) put @229 loop(mapg_o(g,o), put o.tl ) put @236 loop(mapg_i(g,i), put i.tl ) put @246 g.te(g) ;
 ) ;
 
+*put /// 'MW able to be built by technology, region and year' / 'Technology' @20 'Region' @30 loop(y, put y.tl:>8 ) ;
+*loop((k,r)$sum(y, MWtoBuildByRegTechYr(k,r,y)),
+*  put / k.tl @20 r.tl @30 loop(y, put MWtoBuildByRegTechYr(k,r,y):8:0) ;
+*) ;
+
 
 * g) Write the capex statistics.
 put capexStats 'Descriptive statistics of plant capex (lumpy and including grid connection costs).' //
@@ -1242,83 +1278,14 @@ put // 'Peak load, MW' @14 loop(aggR, put aggR.tl:>10 ) ;
 loop(y, put / @2 y.tl @14  loop(aggR, put peakLoadByYearAggR(y,aggR):>10:0 ) ) ;
 
 
-* i) Include code to compute and write out LRMC of all non-existing plant.
+
+*===============================================================================================
+* 8. Include code to compute and write out LRMC of all non-existing plant.
+
 $if %calcInputLRMCs%==0 $goto noLRMC
 $include GEMlrmc.gms
 $label noLRMC
 
 
 
-
 * End of file.
-
-
-
-*$ontext
-* Informs paper data
-Parameter
-  numberYears
-* PVfacG(y,t)             "Generation investor's present value factor by period"
-  PVfactor(y)              "Generation investor's present value factor by year"
-
-* i_fixedOM(g)             'Fixed O&M costs by plant, $/kW/year'
-  ctfixedOM(k)             'Count of plant in fixed OM data by tech'
-  allfixedOM(k,g)          'GEM fixed O&M costs by plant grouped by technology, $/kW/year'
-  avfixedOM(k)             'GEM fixed O&M costs averaged by technology, $/kW/year'
-
-* SRMC(g,y,scenarios)      'Short run marginal cost of each generation project by year and scenario, $/MWh'
-  ctSRMC(k)                'Count of plant in SRMC data by tech'
-  allSRMC(k,g,y)           'GEM short run marginal cost of each generation project grouped by technology, $/MWh'
-  avSRMC(k,y)              'GEM short run marginal cost of each generation project by year and scenario, $/MWh'
-
-* capCharge(g,y)           'Annualised or levelised capital charge for new generation plant, $/MW/yr'
-  ctCapcharge(k)           'Count of plant in capcharge data by tech'
-  allCapcharge(k,g,y)      'GEM annualised capex charges grouped by technology, $/MW/yr'
-  avCapchargeYr(k,y)       'Average GEM annualised capex charges by technology and year, $/MW/yr'
-  avCapcharge(g)           'Average (over years) GEM annualised capex charges by plant, $/MW/yr'
-  capChargeStatistics(k,aggR,stat)  'Descriptive statistics of annualised capex charges by technology, island and NZ - UNITS NOT AS ADVERTISED'
-  ;
-
-numberYears = card(y) ;
-
-pvfactor(y) = 1 / ( 1 + WACCg ) ** (yearNum(y) - firstYear) ;
-
-allfixedOM(k,g)$mapg_k(g,k)     = i_fixedOM(g) ;
-ctfixedOM(k) = sum(mapg_k(g,k)$i_fixedOM(g), 1) ;
-avfixedOM(k)$ctfixedOM(k) = sum(mapg_k(g,k), i_fixedOM(g)) / ctfixedOM(k) ;
-
-*SRMC(g,y,scen) = i_varOM(g) + totalFuelCost(g,y,scen) + CO2taxByPlant(g,y,scen) ;
-allSRMC(k,g,y)$mapg_k(g,k) = SRMC(g,y,'avgHydro') ;
-ctSRMC(k) = sum(mapg_k(g,k)$SRMC(g,'2012','avgHydro'), 1) ;
-avSRMC(k,y)$ctSRMC(k) = sum(mapg_k(g,k), SRMC(g,y,'avgHydro')) / ctSRMC(k) ;
-
-allCapcharge(k,g,y)$mapg_k(g,k) = capCharge(g,y) ;
-ctCapcharge(k)= sum(mapg_k(g,k)$capcharge(g,'2012'), 1) ;
-avCapchargeYr(k,y)$ctCapcharge(k) = sum(mapg_k(g,k), capCharge(g,y)) / ctCapcharge(k) ;
-avCapcharge(g) = sum(y, capCharge(g,y)) / numberYears ;
-
-capChargeStatistics(k,aggR,'count') = sum((g,r)$( mapg_k(g,k) * mapg_r(g,r) * mapAggR_r(aggR,r) * possibleToBuild(g) ), 1 ) ; 
-capChargeStatistics(k,aggR,'min')$capChargeStatistics(k,aggR,'count')   = smin((g,r)$( mapg_k(g,k) * mapg_r(g,r) * mapAggR_r(aggR,r) * possibleToBuild(g) ), avCapCharge(g) ) ; 
-capChargeStatistics(k,aggR,'max')$capChargeStatistics(k,aggR,'count')   = smax((g,r)$( mapg_k(g,k) * mapg_r(g,r) * mapAggR_r(aggR,r) * possibleToBuild(g) ), avCapCharge(g) ) ; 
-capChargeStatistics(k,aggR,'range')$capChargeStatistics(k,aggR,'count') = capChargeStatistics(k,aggR,'max') - capChargeStatistics(k,aggR,'min') ;
-capChargeStatistics(k,aggR,'mean')$capChargeStatistics(k,aggR,'count')  =
-  sum((g,r)$( mapg_k(g,k) * mapg_r(g,r) * mapAggR_r(aggR,r) * possibleToBuild(g) ), avCapCharge(g) ) / capChargeStatistics(k,aggR,'count') ; 
-capChargeStatistics(k,aggR,'variance')$capChargeStatistics(k,aggR,'count') =
-  sum((g,r)$( mapg_k(g,k) * mapg_r(g,r) * mapAggR_r(aggR,r) * possibleToBuild(g) ), sqr(avCapCharge(g) - capChargeStatistics(k,aggR,'mean')) ) / capChargeStatistics(k,aggR,'count') ; 
-capChargeStatistics(k,aggR,'stdDev') = sqrt(capChargeStatistics(k,aggR,'variance')) ;
-capChargeStatistics(k,aggR,'stdDev%')$capChargeStatistics(k,aggR,'mean') = 100 * capChargeStatistics(k,aggR,'stdDev') / capChargeStatistics(k,aggR,'mean') ;
-
-
-*avSRMC(k,y)$capChargeStatistics(k,'nz','count') = sum(mapg_k(g,k), SRMC(g,y,'avgHydro')) / capChargeStatistics(k,'nz','count') ;
-
-option pvfactor:3:0:1 ;
-Display avCapcharge, capChargeStatistics, avSRMC, pvfactor, avfixedOM ;
-
-Execute_Unload "InformsData.gdx" numberYears taxRate WACCg PVfacG pvfactor i_fixedOM ctfixedOM allFixedOM avfixedOM allCapcharge capcharge avCapchargeYr avCapcharge capChargeStatistics SRMC ctSRMC allSRMC avSRMC  ; 
-*$offtext
-
-
-Scalar newGeoMW ;
-newgeoMW = sum(mapg_k(g,k)$( sameas(k,'geo') * noExist(g)), i_nameplate(g)) ;
-display newgeoMW ;
-

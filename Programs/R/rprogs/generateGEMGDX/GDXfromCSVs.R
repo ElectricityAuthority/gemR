@@ -73,25 +73,43 @@ generateGEMGDX <- function(use_default_demand = FALSE, demand_location, demand_n
     
     x <- suppressMessages(read_csv(csv))
     
-    x_cols <- colnames(x)
-    
-    x_sets <- x_cols[!(x_cols %>% str_detect("i_"))]
-    x_parameters <- x_cols[x_cols %>% str_detect("i_")]
-    
-    for(param in 1:length(x_parameters)){
+    # Treat scalars file differently 
+    if(str_detect(csv, "scalars.csv")){
       
-      print(paste0("*", x_parameters[param], "*"))
+      for(i in 1:nrow(x)){
+        
+        scalar_tmp <- x[i,]
+        
+        df_params_list[[scalar_tmp$name]] <- data_frame(value = as.numeric(scalar_tmp$value))
+        
+      }
       
-      df_tmp <- x %>% 
-        select(
-          x_sets
-          , x_parameters[param]
-        ) %>% 
-        rename(
-          value = x_parameters[param]
-        )
+    } else {
       
-      df_params_list[[x_parameters[param]]] <- df_tmp
+      x_cols <- colnames(x)
+      
+      x_sets <- x_cols[!(x_cols %>% str_detect("i_"))]
+      x_parameters <- x_cols[x_cols %>% str_detect("i_")]
+      
+      for(param in 1:length(x_parameters)){
+        
+        print(paste0("*", x_parameters[param], "*"))
+        
+        df_tmp <- x %>% 
+          select(
+            x_sets
+            , x_parameters[param]
+          ) %>% 
+          rename(
+            value = x_parameters[param]
+          ) %>% 
+          mutate(
+            value = as.numeric(value)
+          )
+        
+        df_params_list[[x_parameters[param]]] <- df_tmp
+        
+      }
       
     }
     

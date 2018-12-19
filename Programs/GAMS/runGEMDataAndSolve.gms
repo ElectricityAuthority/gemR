@@ -1,4 +1,5 @@
-$include GEMpathsAndfiles.inc
+*$include GEMpathsAndfiles.inc
+$include GEMsetup.inc
 
 * Invoke GEMdata:
 $call gams GEMdata rf=GEMdata r=GEMdeclarations s=GEMdata gdx=GEMdata %ide%

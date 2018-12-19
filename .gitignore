@@ -8,4 +8,8 @@ Programs/R/output
 Programs/R/rprogs/working
 *.lst
 *.lxi
+*.ref
+*.opt
 Data/i_NrgDemand*
+Programs/Obsolete
+Programs/GAMS/*.gdx

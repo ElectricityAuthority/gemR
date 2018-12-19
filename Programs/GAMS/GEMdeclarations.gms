@@ -78,7 +78,9 @@ Sets
   lb           'Load blocks'
   rc           'Reserve classes'
   hY           'Historical years with hydrology data'
-  v            'Hydro reservoirs or river systems'  ;
+  v            'Hydro reservoirs or river systems'
+  aggR         'Aggregate regional entities'
+  lvl          'Levels of non-free reserves';
 
 Alias (g,gg), (i,ii), (r,rr), (ild,ild1), (ps,pss), (lb,lbb), (hY,hYY), (col,red,green,blue) ;
 
@@ -247,11 +249,11 @@ Sets
                                                                                         dispatch   'Solve for the dispatch only with investment timing fixed'  /
   hydroSeqTypes                                 'Types of hydro sequences to use'     / Same       'Use the same historical hydro year in every modelled year'
                                                                                         Sequential 'Use a sequentially developed mapping of historical hydro years to modelled years' /
-  ild                                           'Islands'                             / ni         'North Island'
-                                                                                        si         'South Island' /
-  aggR                                          'Aggregate regional entities'         / ni         'North Island'
-                                                                                        si         'South Island'
-                                                                                        nz         'New Zealand' /
+*  ild                                           'Islands'                             / ni         'North Island'
+*                                                                                        si         'South Island' /
+*  aggR                                          'Aggregate regional entities'         / ni         'North Island'
+*                                                                                        si         'South Island'
+*                                                                                        nz         'New Zealand' /
   m                                             '12 months'                           / Jan        'January'
                                                                                         Feb        'February'
                                                                                         Mar        'March'
@@ -277,7 +279,8 @@ Sets
                                                                                         StdDev     'Standard deviation, $/kW'
                                                                                        'StdDev%'   'Standard deviation as a percentage'  /
   col                                           'RGB color codes'                     / 0 * 256 /
-  lvl                                           'Levels of non-free reserves'         / lvl1 * lvl5 / ;
+*  lvl                                           'Levels of non-free reserves'         / lvl1 * lvl5 /
+  ;
 
 * b) Scenario-specific sets and parameters - see (mostly) GEMstochastic.
 Sets
@@ -487,8 +490,10 @@ Parameters
   windCoverPropn(rc)                            'Proportion of wind to be covered by reserves, (0-1)'
   bigM(ild,ild1)                                'A large positive number'
 * Non-free reserves
-  largestNIplant                                "Get this from the peak security data - but you can't have it vary by year"   / 385 /
-  largestSIplant                                "Get this from the peak security data - but you can't have it vary by year"   / 125 /
+*  largestNIplant                                "Get this from the peak security data - but you can't have it vary by year"   / 385 /
+*  largestSIplant                                "Get this from the peak security data - but you can't have it vary by year"   / 125 /
+  largestNIplant                                "Get this from the peak security data - but you can't have it vary by year" 
+  largestSIplant                                "Get this from the peak security data - but you can't have it vary by year" 
   freeReserves(r,rr,ps)                         'Free reserves, MW'
   nonFreeReservesCap(r,rr,ps)                   'Non-free reserves max capacity (i.e. amount that the system must pay for), MW'
   bigSwd(r,rr)                                  'Biggest value of non-free reserves in southward direction'
