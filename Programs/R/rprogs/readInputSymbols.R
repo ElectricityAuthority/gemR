@@ -1,7 +1,7 @@
 ###############################################
 ### Title: Read in all input symbols         ##
 ### Description: Read in all input symbols   ##
-### from CSV.                                ##
+### from CSVs.                               ##
 ### Date: 19 December 2018                   ##
 ###############################################
 
@@ -26,8 +26,8 @@ get_CSV_paths <- function(fp){
 }
 
 sets_csv_list <- get_CSV_paths(fp = "Data/Sets")
-subsets_csv_list <- get_CSV_paths("Data/Subsets")
-params_csv_list <- get_CSV_paths("Data/Parameters")
+subsets_csv_list <- get_CSV_paths(fp = "Data/Subsets")
+params_csv_list <- get_CSV_paths(fp = "Data/Parameters")
 
 ###############################################
 ### Read in all sets ##########################
