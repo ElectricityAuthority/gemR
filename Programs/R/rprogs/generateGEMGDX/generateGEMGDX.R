@@ -226,13 +226,13 @@ create_final_CSV(
 ### 11. Generate GDX from CSVs ################
 ###############################################
 
-source(paste0(codePath, "GDXfromCSVs.R"))
-
-generateGEMGDX(
-  use_default_demand = FALSE
-  , demand_location = paste0("Programs/R/output/Archive_", time_suffix, "/")
-  , demand_name = paste0("energyDemand_", scenario_suffix)
-  , output_dir = paste0("Programs/R/output/Archive_", time_suffix, "/")
-  , output_name = paste0("GEMData_", scenario_suffix, ".gdx")
-)
+# source(paste0(codePath, "GDXfromCSVs.R"))
+# 
+# generateGEMGDX(
+#   use_default_demand = FALSE
+#   , demand_location = paste0("Programs/R/output/Archive_", time_suffix, "/")
+#   , demand_name = paste0("energyDemand_", scenario_suffix)
+#   , output_dir = paste0("Programs/R/output/Archive_", time_suffix, "/")
+#   , output_name = paste0("GEMData_", scenario_suffix, ".gdx")
+# )
 

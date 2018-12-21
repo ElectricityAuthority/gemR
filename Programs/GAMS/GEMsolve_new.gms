@@ -50,39 +50,41 @@ $include GEMsetup.inc
 * Read in GDX from GEMdata run and load only symbols that are required
 
 *$gdxin "%DataPath%\%GEMinputGDX%"
-$gdxin "GEMdata.gdx"
+$gdxin "GEMdata_test.gdx"
 
 * Sets
-$loaddc r f k g t lb rc hY v y n numT o p ild
+$loaddc r f k g t lb rc hY v y n numT o p ild aggR
 
 $load firstYr allButFirstYr
 $loaddc movers moverExceptions 
-$loaddc demandGen sigen nigen i_fof 
+$loaddc demandGen sigen nigen  
 $loaddc thermalFuel gas diesel
 $loaddc firstPeriod trnch
 $loaddc wind renew
 $loaddc exist noExist commit
 $loaddc rightAdjacentBlocks
 $loaddc schedHydroUpg pumpedHydroPlant schedHydroPlant
-$loaddc mapm_t mapg_k mapSH_Upg mapv_g mapg_o mapg_f mapg_ild
-$loaddc experiments scenarios scenarioSets
+$loaddc mapm_t mapg_k mapSH_Upg mapv_g mapg_o mapg_f mapg_ild mapAggR_r
+* $loaddc experiments scenarios scenarioSets
 $loaddc possibleToEndogRetire possibleToBuild possibleToRefurbish
-$load endogenousRetireDecisnYrs endogenousRetireYrs validYrBuild validYrOperate
-$loaddc allSolves mapScenarios mapSC_hY mapSC_hydroSeqTypes
-$loaddc integerPlantBuild linearPlantBuild
+$load validYrBuild validYrOperate endogenousRetireDecisnYrs endogenousRetireYrs
+*$loaddc allSolves mapScenarios mapSC_hY mapSC_hydroSeqTypes
+$loaddc integerPlantBuild linearPlantBuild interIsland
 
 * Parameters
-$load yearNum 
-$loaddc i_nameplate  i_baseload i_largestGenerator i_refurbDecisionYear i_fixedOM i_inflexiblePlantFactor 
+$load yearNum i_largestGenerator i_fuelPrices i_co2tax i_P200ratioNI i_P200ratioNZ i_historicalHydroOutput
+$loaddc i_nameplate i_baseload i_refurbDecisionYear i_fixedOM i_inflexiblePlantFactor i_fof i_varFuelCosts
+$loaddc i_emissionFactors i_varOM
 $loaddc i_heatrate i_maxNrgByFuel i_PumpedHydroEffic i_PumpedHydroMonth i_UnitLargestProp bigM 
-$loaddc ensembleFactor continueAftaEndogRetire initialCapacity interIsland 
-$loaddc hoursPerBlock historicalHydroOutput maxCapFactPlant weightScenariosBySet i_HVDCshr
-$load i_HVDClevy capCharge refurbCapCharge exogMWretired minCapFactPlant i_minUtilisation i_fuelQuantities 
-$load i_reserveReqMW i_renewCapShare i_SIACrisk i_fkSI i_HVDClossesAtMaxXfer peakLoadNZ peakLoadNI i_fkNI
-$load PVfacG PVfacT SRMC peakConPlant i_winterCapacityMargin NWpeakConPlant
-$load i_renewNrgShare i_distdGenRenew i_distdGenFossil
+$loaddc ensembleFactor continueAftaEndogRetire initialCapacity  
+$loaddc hoursPerBlock maxCapFactPlant i_HVDCshr
+*$loaddc historicalHydroOutput weightScenariosBySet
+$load i_HVDClevy capCharge refurbCapCharge exogMWretired minCapFactPlant i_minUtilisation i_fuelQuantities
+*$load peakLoadNZ peakLoadNI SRMC
+$load i_reserveReqMW i_renewCapShare i_SIACrisk i_fkSI i_HVDClossesAtMaxXfer i_fkNI
+$load PVfacG PVfacT peakConPlant i_winterCapacityMargin NWpeakConPlant
+$load i_renewNrgShare i_distdGenRenew i_distdGenFossil 
 $loaddc reservesCapability singleReservesReqF penaltyViolateReserves i_plantReservesCost i_offlineReserve windCoverPropn
-
 
 * Other includes
 $include VOLLplant.inc
@@ -92,21 +94,61 @@ $include tempSets.inc
 $loaddc ps tupg 
 $loaddc paths slackBus transitions validTransitions tgc
 $loaddc mapg_r mapild_r
-$loaddc allowedStates notAllowedStates upgradeableStates regLower validTGC 
+$loaddc allowedStates notAllowedStates upgradeableStates regLower validTGC
 $loaddc nwd swd
 
 * Parameters
-$loaddc i_txCapacity txEarlyComYr txFixedComYr i_txCapacityPO i_maxReservesTrnsfr
+$loaddc i_txCapacity txEarlyComYr txFixedComYr i_txCapacityPO i_maxReservesTrnsfr 
 $loaddc pNFresvCost freeReserves pNFresvCap
 $loaddc bigLoss lossIntercept lossSlopeMIP lossSlopeRMIP
-$load txCapCharge susceptanceYr ldcMW
+*$load ldcMW
+$load txCapCharge susceptanceYr 
 $loaddc i_txGrpConstraintsLHS i_txGrpConstraintsRHS BBincidence
 
-*$load   i_NrgDemand
+$load   i_NrgDemand
 
 * Initialise set 'n' and record the number of loss tranches - %NumVertices% comes from GEMsettings.inc.
 *Set n 'Piecewise linear vertices' / n1 * n%NumVertices% / ;
 *numT = %NumVertices% - 1 ; ;
+
+* Prepare the scenario-dependent input data. Key user-specified settings are obtained from GEMstochastic.inc.
+
+$include GEMstochastic.inc
+
+* Pro-rate weightScenariosBySet values so that weights sum to exactly one for each scenarioSets:
+counter = 0 ;
+loop(scenSet,
+  counter = sum(scen, weightScenariosBySet(scenSet,scen)) ;
+  weightScenariosBySet(scenSet,scen)$counter = weightScenariosBySet(scenSet,scen) / counter ;
+) ;
+
+* Compute the short-run marginal cost (and its components) for each generating plant, $/MWh.
+totalFuelCost(g,y,scen) = 1e-3 * scenarioFuelCostFactor(scen) * i_heatrate(g) * sum(mapg_f(g,f), i_fuelPrices(f,y) + i_varFuelCosts(g) ) ;
+
+CO2taxByPlant(g,y,scen) = 1e-9 * i_heatrate(g) * sum((mapg_f(g,f),mapg_k(g,k)), i_co2tax(y) * scenarioCO2TaxFactor(scen) * i_emissionFactors(f) ) ;
+
+SRMC(g,y,scen) = i_varOM(g) + totalFuelCost(g,y,scen) + CO2taxByPlant(g,y,scen) ;
+
+* If SRMC is zero or negligible (< .05) for any plant, assign a positive small value.
+SRMC(g,y,scen)$( SRMC(g,y,scen) < .05 ) = 1e-3 * ord(g) / card(g) ;
+
+* Capture the island-wide AC loss adjustment factors.
+AClossFactors('ni') = %AClossesNI% ;
+AClossFactors('si') = %AClossesSI% ;
+
+* Transfer i_NrgDemand to NrgDemand and adjust for intraregional AC transmission losses and the scenario-specific energy factor.
+NrgDemand(r,y,t,lb,scen) = sum(mapild_r(ild,r), (1 + AClossFactors(ild)) * i_NrgDemand(r,y,t,lb)) * scenarioNRGfactor(scen) ;
+
+* Use the GWh of NrgDemand and hours per LDC block to compute ldcMW (MW).
+ldcMW(r,y,t,lb,scen)$hoursPerBlock(t,lb) = 1e3 * NrgDemand(r,y,t,lb,scen) / hoursPerBlock(t,lb) ;
+
+* Calculate peak load as peak:average ratio and adjust by the scenario-specific peak load factor.
+peakLoadNZ(y,scen) = scenarioPeakLoadFactor(scen) * i_P200ratioNZ(y) * ( 1 / 8.76 ) * sum((r,t,lb)$mapAggR_r('nz',r), NrgDemand(r,y,t,lb,scen)) ;
+peakLoadNI(y,scen) = scenarioPeakLoadFactor(scen) * i_P200ratioNI(y) * ( 1 / 8.76 ) * sum((r,t,lb)$mapAggR_r('ni',r), NrgDemand(r,y,t,lb,scen)) ;
+
+* Transfer hydro output for all historical hydro years from i_historicalHydroOutput to historicalHydroOutput (no scenario-specific adjustment factors at this time).
+historicalHydroOutput(v,hY,m) = i_historicalHydroOutput(v,hY,m) ;
+
 
 
 *===============================================================================================

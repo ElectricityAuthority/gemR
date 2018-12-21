@@ -169,6 +169,11 @@ sets$n <- data_frame(n = paste0("n", 1:as.numeric(globalVars$NumVertices)))
 params$numT <- data_frame(value = as.numeric(globalVars$NumVertices) - 1)
 
 ###############################################
+### Other hard-coded assignments         ######
+###############################################
+params$reservesAreas <- data_frame(rc = c("rc1", "rc2"), value = c(1, 1))
+
+###############################################
 ### Tidy up (i.e. remove unwanted objects) ####
 ###############################################
 to_keep <- c("sets", "subsets", "params", "globalVars", "scalarVars")
