@@ -4,12 +4,10 @@
 .Ruserdata
 config.yml
 demand_*.csv
-Programs/R/output
-Programs/R/rprogs/working
+Programs/R/working
 *.lst
 *.lxi
 *.ref
 *.opt
-Data/i_NrgDemand*
-Programs/Obsolete
+*Obsolete
 Programs/GAMS/*.gdx

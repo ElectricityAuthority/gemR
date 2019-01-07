@@ -4,9 +4,9 @@ runVersionName,v1
 runVersionDesc,Current state
 runVersionRGB,255.0.255
 ProgPath,%system.fp%
-DataPath,%system.fp%..\R\output\Archive_20181116162136\
+DataPath,%system.fp%..\..\Data\GEMsolveInput\GDX\
 OutPath,%system.fp%..\..\Output\
-GEMinputGDX,GEMData_2Region9LB_Standard.gdx
+GEMinputGDX,GEMdata.gdx
 GEMoverrideGDX,
 useOverrides,0
 sprsGEMsolve,0

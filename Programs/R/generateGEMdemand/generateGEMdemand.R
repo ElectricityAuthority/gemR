@@ -1,13 +1,13 @@
 ###############################################
-### Title: Generate GEM GDX data file        ##
+### Title: Generate GEM demand file          ##
 ### Description: This file is used to        ##
-### create a GDX file for use in the GEM     ##
-### model.                                   ##
+### create a demand CSV file for use in      ##
+### the GEM model.                           ## 
 ### Date: 18 April 2018                      ##
 ###############################################
 
 ###############################################
-### 1. Set up libraries and parameters ########
+### 1. Set up libraries and parameters       ##
 ###############################################
 
 # Libraries
@@ -23,21 +23,21 @@ library(stringr)
 
 # Parameters
 demand_year <- 2017
-demand_forecast_file <- "Data/Forecast/annual_energy_forecasts_by_GXP_2012_2050.csv"
+demand_forecast_file <- "Data/Demand/Forecast/annual_energy_forecasts_by_GXP_2012_2050.csv"
 set.seed(12345)
 
 ###############################################
-### 2. Additional setup #######################
+### 2. Additional setup                      ##
 ###############################################
 
 # Relative path to location of GDX creation code
-codePath <- "Programs/R/rprogs/generateGEMGDX/"
+codePath <- "Programs/R/generateGEMdemand/"
 
 # Read in configuration file
 config <- config::get()
 
 # Set path to GDX API (using path set in configuration file)
-igdx(config$gams_dir)
+# igdx(config$gams_dir)
 
 # Create time suffix for current run
 time_suffix <- str_replace_all(as.character(now()), "[:punct:]|\\s", "")
@@ -50,20 +50,20 @@ plot_ts <- FALSE # Takes approx. 5 minutes to plot all POCs
 plot_LDCs <- FALSE # Takes approx. 13 minutes to plot all POCs
 
 # Create new output directory if it doesn't exist
-if(!dir.exists(paste0("Programs/R/output"))){
-  dir.create(paste0("Programs/R/output"))
-}
+# if(!dir.exists(paste0("Programs/R/output"))){
+#   dir.create(paste0("Programs/R/output"))
+# }
 
 # Create archive folder for current run if it doesn't exist
-if(!dir.exists(paste0("Programs/R/output/Archive_", time_suffix))){
-  dir.create(paste0("Programs/R/output/Archive_", time_suffix))
+if(!dir.exists(paste0("Data/Demand/Archive_", time_suffix))){
+  dir.create(paste0("Data/Demand/Archive_", time_suffix))
 }
 
 # Create a new logger object
 logger <- create.logger()
 
 # Set logfile location
-logfile(logger) <- paste0("Programs/R/output/Archive_", time_suffix, "/log_", time_suffix, ".log")
+logfile(logger) <- paste0("Data/Demand/Archive_", time_suffix, "/log_", time_suffix, ".log")
 
 # Set the current level of the logger.
 level(logger) <- 'INFO' 
@@ -80,15 +80,15 @@ channel <- dbConnect(
 )
 
 ###############################################
-### 3. Read in demand dataset #################
+### 3. Read in demand dataset                ##
 ###############################################
 
-source(paste0(codePath, "generateDemand.R"))
+source(paste0(codePath, "getDemand.R"))
 
 # Demand by POC
 ## This function looks to see if a demand file already exists for the given demand year.
 ## If it doesn't, it generates a demand file using data from reconciled consumption.
-demand_by_POC <- generate_demand(demand_year = demand_year)
+demand_by_POC <- getDemand(demand_year = demand_year)
 
 # National demand
 # demand_NZ <- demand %>% 
@@ -99,7 +99,7 @@ demand_by_POC <- generate_demand(demand_year = demand_year)
 #   ungroup()
 
 ###############################################
-### 4. Plot time series #######################
+### 4. Plot time series                      ##
 ###############################################
 
 # Plot time series if plotting turned on.
@@ -113,7 +113,7 @@ if(plot_ts == TRUE){
 }
 
 ###############################################
-### 5. Generate load duration curves (LDCs) ### 
+### 5. Generate load duration curves (LDCs)  ## 
 ############################################### 
 
 source(paste0(codePath, "generateLDCs.R"))
@@ -129,7 +129,7 @@ ldc_by_block_sum <- generate_LDCs_sum(ldc_data = ldc_by_block, byPOC = TRUE)
 # ldc_by_block_sum_NZ <- generate_LDCs_sum(ldc_data = ldc_by_block_NZ, byPOC = FALSE)
 
 ###############################################
-### 6. Plot LDCs ##############################
+### 6. Plot LDCs                             ##
 ###############################################
 
 # Plot LDCs if plotting turned on.
@@ -143,7 +143,7 @@ if(plot_LDCs == TRUE){
 }
 
 ###############################################
-### 7. Compute block weights ##################
+### 7. Compute block weights                 ##
 ###############################################
 
 source(paste0(codePath, "generateBlockWeights.R"))
@@ -152,7 +152,7 @@ source(paste0(codePath, "generateBlockWeights.R"))
 block_weights <- generate_block_weights(ldc_by_block_sum)
 
 ###############################################
-### 8. Compute load share #####################
+### 8. Compute load share                    ##
 ###############################################
 
 source(paste0(codePath, "generateLoadShare.R"))
@@ -161,7 +161,7 @@ source(paste0(codePath, "generateLoadShare.R"))
 load_share <- generate_load_share(ldc_by_block_sum)
 
 ###############################################
-### 9. Apportion annual energy forecast #######
+### 9. Apportion annual energy forecast      ##
 ###############################################
 
 source(paste0(codePath, "apportionForecastLoad.R"))
@@ -183,7 +183,7 @@ forecast_by_load_share_blockwt <- forecast_by_load_share_blockwt(
 )
 
 ###############################################
-### 10. Map POCs to regions ###################
+### 10. Map POCs to regions                  ##
 ###############################################
 
 source(paste0(codePath, "mapPOCStoRegions.R"))
@@ -200,7 +200,7 @@ forecast_by_region_qtr <- forecast_by_region_qtr(
 # TODO: Regions - use GridZones from [DataWarehouse].[common].[DimPointOfConnection] but split Tiwai out from Southland
 
 ###############################################
-### 11. Output to CSV #########################
+### 11. Output to CSV                        ##
 ###############################################
 
 source(paste0(codePath, "createFinalCSV.R"))
@@ -210,29 +210,7 @@ final_file_name <- paste0("energyDemand_", scenario_suffix)
 # Create final dataframe with required names. Output to CSV.
 create_final_CSV(
   input_dataset = forecast_by_region_qtr
-  , CSV_output_dir = "Programs/R/output/"
+  , CSV_output_dir = "Data/Demand/"
   , CSV_output_filename = paste0(final_file_name, ".csv")
 )
-
-# # Generate and execute the gms file to convert the CSV to a GDX
-# convert_CSV_to_GDX(
-#   CSV_filename = paste0(final_file_name, ".csv"),
-#   GMS_filepath = paste0("P:/Market Analytics/EMI/EMI tools/gemR/Programs/R/output/Archive_", time_suffix),
-#   GMS_filename = "generate_GEM_GDX.gms",
-#   GDX_output_filename = paste0("../../../../Data/", final_file_name, ".gdx")
-# )
-
-###############################################
-### 11. Generate GDX from CSVs ################
-###############################################
-
-# source(paste0(codePath, "GDXfromCSVs.R"))
-# 
-# generateGEMGDX(
-#   use_default_demand = FALSE
-#   , demand_location = paste0("Programs/R/output/Archive_", time_suffix, "/")
-#   , demand_name = paste0("energyDemand_", scenario_suffix)
-#   , output_dir = paste0("Programs/R/output/Archive_", time_suffix, "/")
-#   , output_name = paste0("GEMData_", scenario_suffix, ".gdx")
-# )
 

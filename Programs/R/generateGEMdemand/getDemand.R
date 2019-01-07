@@ -7,14 +7,12 @@
 ### Date: 6 August 2018                      ##
 ###############################################
 
-# demand_year <- 2017
-
 # Check to see if a demand CSV for the current 'demand_year' already exists.
 # If it does, load it. If it doesn't, pull from SQL (takes approx. 5mins).
 
-generate_demand <- function(demand_year){
+getDemand <- function(demand_year){
   
-  if(!file.exists(paste0("Programs/R/output/demand_", demand_year, ".csv"))){
+  if(!file.exists(paste0("Data/Demand/demand_", demand_year, ".csv"))){
     
     # Query demand data from SQL DataWarehouse and write to CSV
     demand <- dbGetQuery(
@@ -55,11 +53,11 @@ generate_demand <- function(demand_year){
       ungroup
     
     # Write to CSV (for later use)
-    write_csv(demand, paste0("Programs/R/output/demand_", demand_year, ".csv"))
+    write_csv(demand, paste0("Data/Demand/demand_", demand_year, ".csv"))
     
   } else {
     
-    demand <- read_csv(paste0("Programs/R/output/demand_", demand_year, ".csv"))
+    demand <- read_csv(paste0("Data/Demand/demand_", demand_year, ".csv"))
     
   }
   

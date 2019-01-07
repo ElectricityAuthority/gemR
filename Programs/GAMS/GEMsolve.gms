@@ -37,6 +37,8 @@ $offtext
 
 option seed = 101 ;
 
+File rep 'Write to a solve summary report'  / "tempReport.txt" /;
+
 * Turn the following stuff on/off as desired.
 $offinline offeolcom
 $inlinecom { } eolcom !
@@ -44,13 +46,108 @@ $offupper onempty
 $offuelxref offuellist	
 $offsymxref offsymlist
 
+* Include GEMsetup to load globals and scalars
+$include GEMsetup.inc
 
+* Read in GDX from GEMdata run and load only symbols that are required
+$gdxin "%DataPath%\%GEMinputGDX%"
+
+* Sets
+$loaddc r f k g t lb rc hY v y n numT o p ild aggR lvl
+
+$load firstYr allButFirstYr
+$loaddc movers moverExceptions 
+$loaddc demandGen sigen nigen  
+$loaddc thermalFuel gas diesel
+$loaddc firstPeriod trnch
+$loaddc wind renew
+$loaddc exist noExist commit
+$loaddc rightAdjacentBlocks
+$loaddc schedHydroUpg pumpedHydroPlant schedHydroPlant
+$loaddc mapm_t mapg_k mapSH_Upg mapv_g mapg_o mapg_f mapg_ild mapAggR_r
+* $loaddc experiments scenarios scenarioSets
+$loaddc possibleToEndogRetire possibleToBuild possibleToRefurbish
+$load validYrBuild validYrOperate endogenousRetireDecisnYrs endogenousRetireYrs
+*$loaddc allSolves mapScenarios mapSC_hY mapSC_hydroSeqTypes
+$loaddc integerPlantBuild linearPlantBuild interIsland
+
+* Parameters
+$load yearNum i_largestGenerator i_fuelPrices i_co2tax i_P200ratioNI i_P200ratioNZ i_historicalHydroOutput
+$loaddc i_nameplate i_baseload i_refurbDecisionYear i_fixedOM i_inflexiblePlantFactor i_fof i_varFuelCosts
+$loaddc i_emissionFactors i_varOM
+$loaddc i_heatrate i_maxNrgByFuel i_PumpedHydroEffic i_PumpedHydroMonth i_UnitLargestProp bigM 
+$loaddc ensembleFactor continueAftaEndogRetire initialCapacity  
+$loaddc hoursPerBlock maxCapFactPlant i_HVDCshr
+*$loaddc historicalHydroOutput weightScenariosBySet
+$load i_HVDClevy capCharge refurbCapCharge exogMWretired minCapFactPlant i_minUtilisation i_fuelQuantities
+*$load peakLoadNZ peakLoadNI SRMC
+$load i_reserveReqMW i_renewCapShare i_SIACrisk i_fkSI i_HVDClossesAtMaxXfer i_fkNI
+$load PVfacG PVfacT peakConPlant i_winterCapacityMargin NWpeakConPlant
+$load i_renewNrgShare i_distdGenRenew i_distdGenFossil 
+$loaddc reservesCapability singleReservesReqF penaltyViolateReserves i_plantReservesCost i_offlineReserve windCoverPropn
+
+* Include VOLLplant
+$include VOLLplant.inc
+
+* Sets
+$loaddc ps tupg 
+$loaddc paths slackBus transitions validTransitions tgc
+$loaddc mapg_r mapild_r
+$loaddc allowedStates notAllowedStates upgradeableStates regLower validTGC
+$loaddc nwd swd
+
+* Parameters
+$loaddc i_txCapacity txEarlyComYr txFixedComYr i_txCapacityPO i_maxReservesTrnsfr 
+$loaddc pNFresvCost freeReserves pNFresvCap
+$loaddc bigLoss lossIntercept lossSlopeMIP lossSlopeRMIP
+*$load ldcMW
+$load txCapCharge susceptanceYr 
+$loaddc i_txGrpConstraintsLHS i_txGrpConstraintsRHS BBincidence
+
+$load   i_NrgDemand
+
+* Prepare the scenario-dependent input data. Key user-specified settings are obtained from GEMstochastic.inc.
+$include GEMstochastic.inc
+
+* Pro-rate weightScenariosBySet values so that weights sum to exactly one for each scenarioSets:
+counter = 0 ;
+loop(scenSet,
+  counter = sum(scen, weightScenariosBySet(scenSet,scen)) ;
+  weightScenariosBySet(scenSet,scen)$counter = weightScenariosBySet(scenSet,scen) / counter ;
+) ;
+
+* Compute the short-run marginal cost (and its components) for each generating plant, $/MWh.
+totalFuelCost(g,y,scen) = 1e-3 * scenarioFuelCostFactor(scen) * i_heatrate(g) * sum(mapg_f(g,f), i_fuelPrices(f,y) + i_varFuelCosts(g) ) ;
+
+CO2taxByPlant(g,y,scen) = 1e-9 * i_heatrate(g) * sum((mapg_f(g,f),mapg_k(g,k)), i_co2tax(y) * scenarioCO2TaxFactor(scen) * i_emissionFactors(f) ) ;
+
+SRMC(g,y,scen) = i_varOM(g) + totalFuelCost(g,y,scen) + CO2taxByPlant(g,y,scen) ;
+
+* If SRMC is zero or negligible (< .05) for any plant, assign a positive small value.
+SRMC(g,y,scen)$( SRMC(g,y,scen) < .05 ) = 1e-3 * ord(g) / card(g) ;
+
+* Capture the island-wide AC loss adjustment factors.
+AClossFactors('ni') = %AClossesNI% ;
+AClossFactors('si') = %AClossesSI% ;
+
+* Transfer i_NrgDemand to NrgDemand and adjust for intraregional AC transmission losses and the scenario-specific energy factor.
+NrgDemand(r,y,t,lb,scen) = sum(mapild_r(ild,r), (1 + AClossFactors(ild)) * i_NrgDemand(r,y,t,lb)) * scenarioNRGfactor(scen) ;
+
+* Use the GWh of NrgDemand and hours per LDC block to compute ldcMW (MW).
+ldcMW(r,y,t,lb,scen)$hoursPerBlock(t,lb) = 1e3 * NrgDemand(r,y,t,lb,scen) / hoursPerBlock(t,lb) ;
+
+* Calculate peak load as peak:average ratio and adjust by the scenario-specific peak load factor.
+peakLoadNZ(y,scen) = scenarioPeakLoadFactor(scen) * i_P200ratioNZ(y) * ( 1 / 8.76 ) * sum((r,t,lb)$mapAggR_r('nz',r), NrgDemand(r,y,t,lb,scen)) ;
+peakLoadNI(y,scen) = scenarioPeakLoadFactor(scen) * i_P200ratioNI(y) * ( 1 / 8.76 ) * sum((r,t,lb)$mapAggR_r('ni',r), NrgDemand(r,y,t,lb,scen)) ;
+
+* Transfer hydro output for all historical hydro years from i_historicalHydroOutput to historicalHydroOutput (no scenario-specific adjustment factors at this time).
+historicalHydroOutput(v,hY,m) = i_historicalHydroOutput(v,hY,m) ;
+
+* Include tempSets 
+$include tempSets.inc
 
 *===============================================================================================
 * 1. Take care of preliminaries.
-
-$include VOLLplant.inc
-$include tempSets.inc
 
 * Stamp header for current run/runVersion into GEMsolveReport.
 putclose rep 'Run name:' @15 "%runName%" / 'Run version:' @15 "%runVersionName%" / 'Date/time:' @15 system.date, ' - ' system.time / ;
@@ -107,8 +204,6 @@ $if not exist "%GRscheduleFile%" $error Specified investment schedule does not e
 $if     exist "%GRscheduleFile%" $include "%GRscheduleFile%"
 $label noGRschedule1
 
-
-
 *===============================================================================================
 * 2. Set bounds, initial levels and, in some cases, fix variables to a specified level.
 
@@ -157,8 +252,6 @@ RESV.up(g,rc,y,t,lb,scen)$( reservesOn and reservesCapability(g,rc) ) = reserves
 
 * Don't allow reserves from units prior to committed date or earliest allowable operation or if plant is retired.
 RESV.fx(g,rc,y,t,lb,scen)$( not validYrOperate(g,y) ) = 0 ;
-
-
 
 *===============================================================================================
 * 3. Loop through all the solves
@@ -472,8 +565,6 @@ execute 'gdxmerge "%OutPath%\%runName%\GDX\temp\RepOut\"*.gdx output="%OutPath%\
 * that exceeds the size will be processed by reading each gdx file and only process the data for that symbol. This
 * can lead to reading the same gdx file many times, but it allows the merging of large data sets.
 
-
-
 *===============================================================================================
 * 4. Dump selected prepared input data into a GDX file and rename/relocate a couple of log files.
 *    NB: input data is as imported from .gdx/.inc files or from intermediate steps in GEMdata.
@@ -486,9 +577,11 @@ Execute_Unload "%OutPath%\%runName%\Input data checks\Selected prepared input da
   isIldEqReg firstPeriod firstYr lastYr allButFirstYr
   paths nwd swd interIsland pumpedHydroPlant wind gas diesel
   thermalFuel i_fuelQuantities renew schedHydroPlant trnch demandGen 
-  allSolves weightScenariosBySet numExperiments numSteps numScenarioSets numScenarios
+  allSolves weightScenariosBySet
+*  numExperiments numSteps numScenarioSets numScenarios
 * Time, financial, capex and cost related sets and parameters
-  yearNum taxRate discountRates PVfacG PVfacT PVfacsM PVfacsEY PVfacs capexLife annuityFacN annuityFacR TxAnnuityFacN TxAnnuityFacR
+  yearNum taxRate discountRates PVfacG PVfacT PVfacsM PVfacsEY PVfacs capexLife annuityFacN annuityFacR TxAnnuityFacN
+*TxAnnuityFacR
   capRecFac depTCrecFac txCapRecFac txDepTCrecFac i_capitalCost i_connectionCost ensembleFactor capexPlant refurbCapexPlant
   capCharge refurbCapCharge txCapCharge
   i_winterCapacityMargin i_SIACrisk i_fkSI i_fkNI i_HVDClossesAtMaxXfer i_largestGenerator i_P200ratioNZ i_P200ratioNI
@@ -514,21 +607,8 @@ Execute_Unload "%OutPath%\%runName%\Input data checks\Selected prepared input da
   penaltyViolatePeakLoad penaltyViolateRenNrg penaltyViolateReserves
   ;
 
-* Stamp run version name, description and colour scheme in runVersions.txt
-putclose rvs "%runVersionName%" ' | ' "%runVersionDesc%" ' | ' "%runVersionRGB%" / ;
-
-bat.ap = 0 ;
-putclose bat
-  'copy "GEMsolve.log" "%OutPath%\%runName%\Processed files\GEMsolveLog - %runName%_%runVersionName%.txt"' /
-  'copy "Report.txt"   "%OutPath%\%runName%\GEMsolveReport - %runName%.txt"' / ;
-execute 'temp.bat' ;
-
-
-
 
 * End of file.
-
-
 
 $stop
 

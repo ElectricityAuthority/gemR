@@ -1,30 +1,11 @@
 ###############################################
-### Title: Intermediate data manipulations   ##
-### Description: Read in, modify and         ##
-### create new input symbols                 ##
-### Date: 19 December 2018                   ##
+### Title: generateGEMdata()                 ##
+### Description: Function for generating     ##
+### GEM input GDX. All symbol modification   ##
+### occurs in here. A GDX is then created    ##
+### that can be read in to GEMsolve.         ##
 ###############################################
-
-###############################################
-### Load libraries ############################
-###############################################
-library(tidyverse)
-library(gdxtools)
-library(rlist)
-
-###############################################
-### Read in all input symbols #################
-###############################################
-source("Programs/R/rprogs/readInputSymbols.R")
-
-###############################################
-### Title: generateGEMGDX()                 ###
-### Description: Function for generating    ###
-### GEM input GDX. All symbol modification  ###
-### occurs in here. A GDX is then created   ###
-### that can be read in to GEMsolve.        ###
-###############################################
-generateGEMGDX <- function(
+generateGEMdata <- function(
   use_default_demand = FALSE
   , demand_location
   , demand_name
@@ -36,19 +17,19 @@ generateGEMGDX <- function(
   ## Year variables
   
   ### firstYear - scalar for first calendar year
-  params$firstYear <- data_frame(value = globalVars$firstYear)
+  params$firstYear <- tibble(value = globalVars$firstYear)
   
   ### firstYearNum - numeric version of firstYear
   params$firstYearNum <- as.numeric(params$firstYear$value)
   
   ### lastYear - scalar for last calendar year
-  params$lastYear <- data_frame(value = globalVars$lastYear)
+  params$lastYear <- tibble(value = globalVars$lastYear)
   
   ### lastYearNum - numeric version of firstYear
   params$lastYearNum <- as.numeric(params$lastYear$value)
   
   ### y - Modelled calendar years
-  sets$y <- data_frame(y = params$firstYearNum:params$lastYearNum)
+  sets$y <- tibble(y = params$firstYearNum:params$lastYearNum)
   
   ### firstYr(y) - subset of first calendar year
   subsets$firstYr <- sets$y %>% 
@@ -178,7 +159,7 @@ generateGEMGDX <- function(
   ## Count number of regions
   
   ### numReg - scalar for number of regions
-  params$numReg <- data_frame(value = nrow(sets$r))
+  params$numReg <- tibble(value = nrow(sets$r))
   
   ## Identify generation plant types
   
@@ -212,7 +193,7 @@ generateGEMGDX <- function(
     as_tibble()
   
   ## Count of unique periods
-  params$countT <- data_frame(value = length(unique(sets$t$t)))
+  params$countT <- tibble(value = length(unique(sets$t$t)))
   
   ## Numeric order of periods (based on row number)
   params$orderT <- sets$t %>% 
@@ -315,7 +296,7 @@ generateGEMGDX <- function(
     select(y, value)
   
   ### txAnnuityFacR - real transmission annuity factor (scalar)
-  params$txAnnuityFacR <- data_frame(
+  params$txAnnuityFacR <- tibble(
     value = ( 1 - ( 1 + scalarVars$WACCt ) ** (-scalarVars$txPlantLife) ) / scalarVars$WACCt
   )
   
@@ -1256,7 +1237,7 @@ generateGEMGDX <- function(
     crossing(sets$r %>% rename(rr = r)) %>% 
     filter(r != rr) %>% 
     crossing(
-      data_frame(
+      tibble(
         ps = unique(c(subsets$transitions$ps, subsets$transitions$pss)
         )
       )
@@ -1325,7 +1306,7 @@ generateGEMGDX <- function(
     distinct(r, rr)
   
   ### numPaths
-  params$numPaths <- data_frame(value = nrow(subsets$paths))
+  params$numPaths <- tibble(value = nrow(subsets$paths))
   
   ## Identify all allowable states of upgrade on each path
   
@@ -1745,7 +1726,7 @@ generateGEMGDX <- function(
     ) %>% 
     # Add -INF where both islands are the same
     union_all(
-      data_frame(
+      tibble(
         ild = c("ni", "si")
         , ild1 = c("ni", "si")
         , value = c(-Inf, -Inf)
@@ -1885,7 +1866,7 @@ generateGEMGDX <- function(
   # Subset to the symbols that are required by GEMsolve
   setsForGDX <- list.subset(sets, c(
     "r", "f", "k", "g", "t", "lb", "rc", "hY", "v", "y", "n", "o", "p", "ild",
-    "ps", "tupg", "tgc", "aggR"
+    "ps", "tupg", "tgc", "aggR", "lvl"
   ))
   
   subsetsForGDX <- list.subset(subsets, c(
@@ -1940,7 +1921,7 @@ generateGEMGDX <- function(
   # Write to GDX. Note the filtering of sets, subsets and parameters.
   write2.gdx(
     
-    paste0(output_dir, output_name)
+    "Data/GEMsolveInput/GDX/GEMdata.gdx"
     
     , params = paramsForGDX
     
@@ -1952,9 +1933,3 @@ generateGEMGDX <- function(
   )
   
 }
-
-# generateGEMGDX(
-#   use_default_demand = TRUE
-#   , output_dir = paste0("Programs/GAMS/")
-#   , output_name = paste0("GEMData_test.gdx")
-# )

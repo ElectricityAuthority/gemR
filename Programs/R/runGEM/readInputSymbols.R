@@ -25,9 +25,9 @@ get_CSV_paths <- function(fp){
   list.files(fp, recursive = TRUE, pattern = ".csv", full.names = TRUE)
 }
 
-sets_csv_list <- get_CSV_paths(fp = "Data/Sets")
-subsets_csv_list <- get_CSV_paths(fp = "Data/Subsets")
-params_csv_list <- get_CSV_paths(fp = "Data/Parameters")
+sets_csv_list <- get_CSV_paths(fp = "Data/GEMdataInput/Sets")
+subsets_csv_list <- get_CSV_paths(fp = "Data/GEMdataInput/Subsets")
+params_csv_list <- get_CSV_paths(fp = "Data/GEMdataInput/Parameters")
 
 ###############################################
 ### Read in all sets ##########################
@@ -176,7 +176,7 @@ params$reservesAreas <- data_frame(rc = c("rc1", "rc2"), value = c(1, 1))
 ###############################################
 ### Tidy up (i.e. remove unwanted objects) ####
 ###############################################
-to_keep <- c("sets", "subsets", "params", "globalVars", "scalarVars")
+# to_keep <- c("sets", "subsets", "params", "globalVars", "scalarVars")
 
-rm(list = setdiff(ls(), to_keep))
+# rm(list = setdiff(ls(), to_keep))
 

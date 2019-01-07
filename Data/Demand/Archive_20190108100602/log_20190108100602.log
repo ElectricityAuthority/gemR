@@ -1,0 +1,4 @@
+[ 2019-01-08 10:06:24 ] WARN Current demand forecast file used in development only has 180 POCs. 
+    Temporarily dropping those records that don't have forecast values. 
+[ 2019-01-08 10:06:25 ] WARN Current demand forecast file used in development only has 180 POCs. 
+  Temporarily dropping those records that don't have forecast values. 

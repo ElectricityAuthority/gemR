@@ -1158,12 +1158,12 @@ $offecho
 
 Files
   VOLLplant 'Write VOLL plant on the fly'      / VOLLplant.inc /
-  rep       'Write to a solve summary report'  / Report.txt /
+*  rep       'Write to a solve summary report'  / Report.txt /
   con       'Write to the console'             / con /
   dummy ;
 
 VOLLplant.lw = 0 ;
-rep.lw = 0 ; rep.ap = 1 ;
+*rep.lw = 0 ; rep.ap = 1 ;
 con.lw = 0 ;
 
 
