@@ -1,8 +1,4 @@
 variable,value
-runName,standard_run
-runVersionName,v1
-runVersionDesc,Current state
-runVersionRGB,255.0.255
 ProgPath,%system.fp%
 DataPath,%system.fp%..\..\Data\GEMsolveInput\GDX\
 OutPath,%system.fp%..\..\Output\
@@ -13,8 +9,8 @@ sprsGEMsolve,0
 Mode,0
 GRscheduleFile,
 GRscheduleRead,0
-firstYear,2012
-lastYear,2025
+firstYear,2017
+lastYear,2018
 RunType,1
 GEMtype,RMIP
 DISPtype,RMIP

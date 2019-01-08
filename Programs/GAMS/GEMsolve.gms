@@ -37,8 +37,6 @@ $offtext
 
 option seed = 101 ;
 
-File rep 'Write to a solve summary report'  / "tempReport.txt" /;
-
 * Turn the following stuff on/off as desired.
 $offinline offeolcom
 $inlinecom { } eolcom !
@@ -53,7 +51,7 @@ $include GEMsetup.inc
 $gdxin "%DataPath%\%GEMinputGDX%"
 
 * Sets
-$loaddc r f k g t lb rc hY v y n numT o p ild aggR lvl
+$loaddc r f k g t lb rc hY v y n numT o p ild aggR lvl s
 
 $load firstYr allButFirstYr
 $loaddc movers moverExceptions 
@@ -64,11 +62,9 @@ $loaddc wind renew
 $loaddc exist noExist commit
 $loaddc rightAdjacentBlocks
 $loaddc schedHydroUpg pumpedHydroPlant schedHydroPlant
-$loaddc mapm_t mapg_k mapSH_Upg mapv_g mapg_o mapg_f mapg_ild mapAggR_r
-* $loaddc experiments scenarios scenarioSets
+$loaddc mapm_t mapg_k mapSH_Upg mapv_g mapg_o mapg_f mapg_ild mapAggR_r maps_r
 $loaddc possibleToEndogRetire possibleToBuild possibleToRefurbish
 $load validYrBuild validYrOperate endogenousRetireDecisnYrs endogenousRetireYrs
-*$loaddc allSolves mapScenarios mapSC_hY mapSC_hydroSeqTypes
 $loaddc integerPlantBuild linearPlantBuild interIsland
 
 * Parameters
@@ -78,16 +74,14 @@ $loaddc i_emissionFactors i_varOM
 $loaddc i_heatrate i_maxNrgByFuel i_PumpedHydroEffic i_PumpedHydroMonth i_UnitLargestProp bigM 
 $loaddc ensembleFactor continueAftaEndogRetire initialCapacity  
 $loaddc hoursPerBlock maxCapFactPlant i_HVDCshr
-*$loaddc historicalHydroOutput weightScenariosBySet
 $load i_HVDClevy capCharge refurbCapCharge exogMWretired minCapFactPlant i_minUtilisation i_fuelQuantities
-*$load peakLoadNZ peakLoadNI SRMC
 $load i_reserveReqMW i_renewCapShare i_SIACrisk i_fkSI i_HVDClossesAtMaxXfer i_fkNI
 $load PVfacG PVfacT peakConPlant i_winterCapacityMargin NWpeakConPlant
 $load i_renewNrgShare i_distdGenRenew i_distdGenFossil 
 $loaddc reservesCapability singleReservesReqF penaltyViolateReserves i_plantReservesCost i_offlineReserve windCoverPropn
 
-* Include VOLLplant
-$include VOLLplant.inc
+** Include VOLLplant
+*$include VOLLplant.inc
 
 * Sets
 $loaddc ps tupg 
@@ -150,7 +144,7 @@ $include tempSets.inc
 * 1. Take care of preliminaries.
 
 * Stamp header for current run/runVersion into GEMsolveReport.
-putclose rep 'Run name:' @15 "%runName%" / 'Run version:' @15 "%runVersionName%" / 'Date/time:' @15 system.date, ' - ' system.time / ;
+*putclose rep 'Run name:' @15 "%runName%" / 'Run version:' @15 "%runVersionName%" / 'Date/time:' @15 system.date, ' - ' system.time / ;
 
 * Specify various .lst file options.
 if(%limitOutput% = 1, option limcol = 0, limrow = 0, sysout = off, solprint = off ; ) ; 
@@ -434,10 +428,10 @@ $ label noGRschedule2
                       '   Objective function value: ' TOTALCOST.l:<12:1 // ;
 
 *     If job is about to be aborted or a warning issued, post an error message in GEMsolveReport.
-      if(counter = 1,
-        putclose rep / 'Model: ' experiments.tl '-' steps.tl '-' scenSet.tl ' finished with some sort of problem and the job is now going to abort.' /
-                       'Examine GEMsolve.lst and/or GEMsolve.log to see what went wrong.' ;
-      ) ;
+*      if(counter = 1,
+*        putclose rep / 'Model: ' experiments.tl '-' steps.tl '-' scenSet.tl ' finished with some sort of problem and the job is now going to abort.' /
+*                       'Examine GEMsolve.lst and/or GEMsolve.log to see what went wrong.' ;
+*      ) ;
 
       if(sameas(steps,'dispatch'),
         abort$( DISP.modelstat <> 1 and DISP.modelstat <> 8 ) "Problem encountered when solving DISP..." ;
@@ -453,26 +447,26 @@ $ label noGRschedule2
      ) ;
 
 *     Write current model summary information to GEMsolveReport:
-      put rep / 'Experiment: ' experiments.tl '.  Step: ' steps.tl '.  Scenario set: ' scenSet.tl '.' /
-      '  Objective function value: ' @32 TOTALCOST.l:>12:1 / ;
-$     if "%GEMtype%"=="RMIP" $goto skipThis
-      if(not sameas(steps,'dispatch'),
-        put '  Percent gap:'                @33 solveReport(allSolves,'Gap%'):12:2 /
-            '  Absolute gap:'               @30 solveReport(allSolves,'GapAbs'):12:0 /
-            '  Number of binary variables:' @30 solveReport(allSolves,'DVars'):12:0 /
-      ) ;
-$     label skipThis
-      put
-      '  Number of variables:'        @30 solveReport(allSolves,'Vars'):12:0 /
-      '  Number of equations:'        @30 solveReport(allSolves,'Eqns'):12:0 /
-      '  Number of iterations:'       @30 solveReport(allSolves,'Iter'):12:0 /
-      '  Model generation seconds:'   @30 solveReport(allSolves,'genSecs'):12:0 /
-      '  CPU seconds:'                @30 solveReport(allSolves,'Time'):12:0 /
-      '  Number of iterations:'       @30 solveReport(allSolves,'Iter'):12:0 /
-      '  Slacks present: '            @39 if(slacks > 0, put 'Yes' else put @40 'No' ) put /
-      '  Penalties present: '         @39 if(penalties > 0, put 'Yes' else put @40 'No' ) put /
-      '  MIP/RMIP:' @38 if(sameas(steps,'dispatch'), put "%DISPtype%" else put "%GEMtype%" ) ;
-      if(%GRscheduleRead%=0, put / else put '  Fixed investment schedule:' @30 "%GRscheduleFile%" // ) ; 
+*      put rep / 'Experiment: ' experiments.tl '.  Step: ' steps.tl '.  Scenario set: ' scenSet.tl '.' /
+*      '  Objective function value: ' @32 TOTALCOST.l:>12:1 / ;
+*$     if "%GEMtype%"=="RMIP" $goto skipThis
+*      if(not sameas(steps,'dispatch'),
+*        put '  Percent gap:'                @33 solveReport(allSolves,'Gap%'):12:2 /
+*            '  Absolute gap:'               @30 solveReport(allSolves,'GapAbs'):12:0 /
+*            '  Number of binary variables:' @30 solveReport(allSolves,'DVars'):12:0 /
+*      ) ;
+*$     label skipThis
+*      put
+*      '  Number of variables:'        @30 solveReport(allSolves,'Vars'):12:0 /
+*      '  Number of equations:'        @30 solveReport(allSolves,'Eqns'):12:0 /
+*      '  Number of iterations:'       @30 solveReport(allSolves,'Iter'):12:0 /
+*      '  Model generation seconds:'   @30 solveReport(allSolves,'genSecs'):12:0 /
+*      '  CPU seconds:'                @30 solveReport(allSolves,'Time'):12:0 /
+*      '  Number of iterations:'       @30 solveReport(allSolves,'Iter'):12:0 /
+*      '  Slacks present: '            @39 if(slacks > 0, put 'Yes' else put @40 'No' ) put /
+*      '  Penalties present: '         @39 if(penalties > 0, put 'Yes' else put @40 'No' ) put /
+*      '  MIP/RMIP:' @38 if(sameas(steps,'dispatch'), put "%DISPtype%" else put "%GEMtype%" ) ;
+*      if(%GRscheduleRead%=0, put / else put '  Fixed investment schedule:' @30 "%GRscheduleFile%" // ) ; 
 
 *     Write a GAMS-readable file of variable levels for fixing variables in subsequent models (requires GRscheduleWrite = 1).
       if(GRscheduleWrite,
@@ -552,9 +546,9 @@ $     include CollectResults.inc
 
 
 * Place some white space in GEMsolveReport ahead of the next run version. Also, note whether any models in this run version contain slacks or penalties. 
-if(sum(allSolves, solveReport(allSolves,'Penalties')) > 0, putclose rep / '+++ At least one of the above models contains penalty variables +++' ) ;
-if(sum(allSolves, solveReport(allSolves,'Slacks')) > 0,    putclose rep / '+++ At least one of the above models contains slack variables +++' ) ;
-putclose rep /// ;
+*if(sum(allSolves, solveReport(allSolves,'Penalties')) > 0, putclose rep / '+++ At least one of the above models contains penalty variables +++' ) ;
+*if(sum(allSolves, solveReport(allSolves,'Slacks')) > 0,    putclose rep / '+++ At least one of the above models contains slack variables +++' ) ;
+*putclose rep /// ;
 
 
 * Merge the GDX files from each experiment into a single GDX - one for all output and once for the 'report only' output. Call the files 'allExperimentsXXX.gdx'.
@@ -611,29 +605,3 @@ Execute_Unload "%OutPath%\%runName%\Input data checks\Selected prepared input da
 * End of file.
 
 $stop
-
-*  x. Create an awk script which, when executed, will produce a file containing the number of integer solutions per MIP model.
-$if %GEMtype%=="rmip" $goto NoMIP
-$onecho > f.awk
-/Restarting execution/ {
-  ++count2
-  if (count1>0) {
-    print "Model: " name "  Integer solutions: " count1
-    count1 = 0
-  }
-}
-
-/^\* / {
-  ++count1
-}
-
-/^--- LOOPS / {
-# Assumes there will be 3 nested loops
-  name = $NF
-  getline
-  name = name "-" $NF
-  getline
-  name = name "-" $NF
-}
-$offecho
-$label NoMIP

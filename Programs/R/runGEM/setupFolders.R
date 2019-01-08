@@ -5,12 +5,12 @@
 ### Date: 7 January 2019                     ##
 ###############################################
 
-setupFolders <- function(){
+setupFolders <- function(runName){
   
-  # Get runName from globalVariables file
-  runName <- read_csv("Data/Setup/globalVariables.csv") %>%
-    filter(variable == "runName") %>%
-    .$value
+  # # Get runName from globalVariables file
+  # runName <- read_csv("Data/Setup/globalVariables.csv") %>%
+  #   filter(variable == "runName") %>%
+  #   .$value
   
   # Set paths
   outPath <- paste0("Output/", runName)

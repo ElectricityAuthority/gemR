@@ -8,9 +8,7 @@
 generateGEMdata <- function(
   use_default_demand = FALSE
   , demand_location
-  , demand_name
-  , output_dir
-  , output_name){
+  , demand_name){
   
   # a) Time/date-related sets and parameters.
   
@@ -1863,10 +1861,30 @@ generateGEMdata <- function(
     ungroup() %>% 
     select(r, rr, lvl, value)
   
+  ## Create VOLLplant sets
+  
+  ### s
+  sets$s <- tibble(s = paste0("VOLL", sets$r$r))
+  
+  ### maps_r(s,r)
+  subsets$maps_r <- sets$s %>% 
+    crossing(sets$r) %>% 
+    filter(str_detect(s, r))
+  
+  # If the default demand flag is set to FALSE, replace the default 'i_NrgDemand' parameter with the new one
+  if(!use_default_demand){
+    
+    params$i_NrgDemand <- read_csv(paste0(demand_location, demand_name, ".csv")) %>% 
+      rename(
+        value = i_NrgDemand
+      )
+    
+  } 
+  
   # Subset to the symbols that are required by GEMsolve
   setsForGDX <- list.subset(sets, c(
     "r", "f", "k", "g", "t", "lb", "rc", "hY", "v", "y", "n", "o", "p", "ild",
-    "ps", "tupg", "tgc", "aggR", "lvl"
+    "ps", "tupg", "tgc", "aggR", "lvl", "s"
   ))
   
   subsetsForGDX <- list.subset(subsets, c(
@@ -1878,7 +1896,7 @@ generateGEMdata <- function(
     "validYrOperate", "integerPlantBuild", "linearPlantBuild", "paths", "slackBus", 
     "transitions", "validTransitions", "mapg_r", "mapild_r", "allowedStates",
     "notAllowedStates", "upgradeableStates", "regLower", "nwd", "swd", "interIsland",
-    "endogenousRetireDecisnYrs", "endogenousRetireYrs", "validTGC", "mapAggR_r"
+    "endogenousRetireDecisnYrs", "endogenousRetireYrs", "validTGC", "mapAggR_r", "maps_r"
   ))
   
   paramsForGDX <- list.subset(params, c(
@@ -1907,16 +1925,7 @@ generateGEMdata <- function(
   # Change all columns in sets and subsets dataframes to character
   setsForGDX <- lapply(setsForGDX, function(x) x %>% mutate_all(as.character))
   subsetsForGDX <- lapply(subsetsForGDX, function(x) x %>% mutate_all(as.character))
-  
-  # If the default demand flag is set to FALSE, replace the default 'i_NrgDemand' parameter with the new one
-  if(!use_default_demand){
-    
-    params$i_NrgDemand <- read_csv(paste0(demand_location, demand_name, ".csv")) %>% 
-      rename(
-        value = i_NrgDemand
-      )
-    
-  } 
+ 
   
   # Write to GDX. Note the filtering of sets, subsets and parameters.
   write2.gdx(
