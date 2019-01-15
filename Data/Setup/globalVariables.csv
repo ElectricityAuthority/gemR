@@ -9,8 +9,6 @@ sprsGEMsolve,0
 Mode,0
 GRscheduleFile,
 GRscheduleRead,0
-firstYear,2017
-lastYear,2018
 RunType,1
 GEMtype,RMIP
 DISPtype,RMIP

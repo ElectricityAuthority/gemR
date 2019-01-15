@@ -3,7 +3,8 @@
 ### Description: Function for generating the ##
 ### GEM setup include file from input CSVs   ##
 ###############################################
-generateGEMsetup <- function(runName, runVersionName, runNameDesc){
+generateGEMsetup <- function(runName, runVersionName, runNameDesc,
+                             firstYear, lastYear){
   
   # Read in global variables CSV
   globalVars <- read_csv("Data/Setup/globalVariables.csv") %>% 
@@ -12,8 +13,10 @@ generateGEMsetup <- function(runName, runVersionName, runNameDesc){
     ) %>% 
     # Add rows for runName, runVersionName and runNameDesc
     add_row(
-      variable = c("runName", "runVersionName", "runNameDesc")
-      , value = c(runName, runVersionName, runNameDesc)
+      variable = c("runName", "runVersionName", "runNameDesc",
+                   "firstYear", "lastYear")
+      , value = c(runName, runVersionName, runNameDesc,
+                  firstYear, lastYear)
     )
   
   # Read in scalar variables CSV

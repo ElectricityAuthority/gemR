@@ -13,38 +13,26 @@ library(gdxrrw)
 library(readtext)
 library(rlist)
 
-###############################################
+##############################################
 ### 2. Additional setup                      ##
 ###############################################
 
-runName <- c(
-  "standard_run"
-  , "demand_plus_10"
-)
+runName <- "standard_run"
 
-runVersionName <- c(
-  "v1"
-  , "v1"
-)
+# runVersionName <- "v1"
 
-runNameDesc <- c(
-  "Standard run"
-  , "Demand plus 10 percent"
-)
+runNameDesc <- "Standard run"
 
-demand_location <- c(
-  "Data/Demand/Archive_20190108100602/"
-  , "Data/Demand/Archive_20190108100602/"
-)
+firstYear <- "2012"
 
-demand_name <- c(
-  "energyDemand_2Region9LB_Standard"
-  , "energyDemand_2Region9LB_plus10percent"
-)
+lastYear <- "2013"
 
-runSheet <- tibble(runName, runVersionName, runNameDesc, demand_location, demand_name)
+demand_path <- "Data/Demand/Archive_20190108100602/energyDemand_2Region9LB_Standard.csv"
 
 GEMdeclarationsFlag <- FALSE
+
+# Turn off messages from readr
+options(readr.num_columns = 0)
 
 ###############################################
 ### 3. Load function for executing GAMS code ##
@@ -69,46 +57,63 @@ if(GEMdeclarationsFlag){
 ###############################################
 source("Programs/R/runGEM/readInputSymbols.R")
 
-# Loop through "run sheet"
-for(i in 1:nrow(runSheet)){
-  
-  ###############################################
-  ### 6. Set up folders                        ##
-  ###############################################
-  source("Programs/R/runGEM/setupFolders.R")
-  
-  setupFolders(runName = runSheet$runName[i])
-  
-  ###############################################
-  ### 7. Generate GEMsetup include file from   ##
-  ### CSV                                      ##
-  ###############################################
-  source("Programs/R/runGEM/generateGEMsetup.R")
-  
-  generateGEMsetup(
-    runName = runSheet$runName[i]
-    , runVersionName = runSheet$runVersionName[i]
-    , runNameDesc = runSheet$runNameDesc[i]
-  )
-  
-  ###############################################
-  ### 8. Generate GEMdata GDX file             ##
-  ###############################################
-  source("Programs/R/runGEM/generateGEMdata.R")
-  
-  generateGEMdata(
-    use_default_demand = FALSE
-    , demand_location = runSheet$demand_location[i]
-    , demand_name = runSheet$demand_name[i]
-  )
-  
-  ###############################################
-  ### 9. Execute GEMsolve                      ##
-  ###############################################
-  executeGAMS(
-    GAMS_filepath = "Programs/GAMS"
-    , GAMS_filename = "GEMsolve"
-    , GAMS_opts = "r = GEMdeclarations gdx = GEMsolve"
-  )
-  
-}
+###############################################
+### 6. Set up folders                        ##
+###############################################
+source("Programs/R/runGEM/setupFolders.R")
+
+setupFolders(runName = runName)
+
+###############################################
+### 7. Generate GEMsetup include file from   ##
+### CSV                                      ##
+###############################################
+source("Programs/R/runGEM/generateGEMsetup.R")
+
+generateGEMsetup(
+  runName = runName
+  # , runVersionName = runVersionName
+  , runVersionName = "v1"
+  , runNameDesc = runNameDesc
+  , firstYear = firstYear
+  , lastYear = lastYear
+)
+
+###############################################
+### 8. Generate GEMdata GDX file             ##
+###############################################
+source("Programs/R/runGEM/generateGEMdata.R")
+
+generateGEMdata(
+  use_default_demand = FALSE
+  , demand_path = demand_path
+  , firstYear = firstYear
+  , lastYear = lastYear
+)
+
+###############################################
+### 9. Archive input GDX for current run     ##
+###############################################
+source("Programs/R/runGEM/archiveGEMdataGDX.R")
+
+archiveGEMdataGDX(runName = runName)
+
+###############################################
+### 10. Execute GEMsolve                     ##
+###############################################
+executeGAMS(
+  GAMS_filepath = "Programs/GAMS"
+  , GAMS_filename = "GEMsolve"
+  , GAMS_opts = paste0("r = GEMdeclarations gdx = ", "../../Output/", runName, "/GEMsolve_", runName, ".gdx")
+)
+
+###############################################
+### 11. Create reports                       ##
+###############################################
+source("Programs/R/generateGEMreports/GEMreporting.R")
+
+createGEMreports(
+  runName = runName
+  # , runVersionName = runVersionName
+  , runVersionName = "v1"
+)

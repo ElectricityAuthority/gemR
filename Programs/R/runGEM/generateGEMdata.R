@@ -7,21 +7,24 @@
 ###############################################
 generateGEMdata <- function(
   use_default_demand = FALSE
-  , demand_location
-  , demand_name){
+  , demand_path
+  , firstYear
+  , lastYear){
   
   # a) Time/date-related sets and parameters.
   
   ## Year variables
   
   ### firstYear - scalar for first calendar year
-  params$firstYear <- tibble(value = globalVars$firstYear)
+  # params$firstYear <- tibble(value = globalVars$firstYear)
+  params$firstYear <- tibble(value = firstYear)
   
   ### firstYearNum - numeric version of firstYear
   params$firstYearNum <- as.numeric(params$firstYear$value)
   
   ### lastYear - scalar for last calendar year
-  params$lastYear <- tibble(value = globalVars$lastYear)
+  # params$lastYear <- tibble(value = globalVars$lastYear)
+  params$lastYear <- tibble(value = lastYear)
   
   ### lastYearNum - numeric version of firstYear
   params$lastYearNum <- as.numeric(params$lastYear$value)
@@ -145,9 +148,6 @@ generateGEMdata <- function(
   subsets$mapv_g <- subsets$mapReservoirs %>% 
     select(v, g) %>% 
     distinct()
-  
-  ## Fuel mappings
-  # thermalTech <- read_csv("Data/Subsets/thermalTech.csv")
   
   ### thermalFuel(f) - thermal fuels
   subsets$thermalFuel <- subsets$thermalTech %>% 
@@ -1874,7 +1874,7 @@ generateGEMdata <- function(
   # If the default demand flag is set to FALSE, replace the default 'i_NrgDemand' parameter with the new one
   if(!use_default_demand){
     
-    params$i_NrgDemand <- read_csv(paste0(demand_location, demand_name, ".csv")) %>% 
+    params$i_NrgDemand <- read_csv(demand_path) %>% 
       rename(
         value = i_NrgDemand
       )

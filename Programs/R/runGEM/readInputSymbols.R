@@ -94,7 +94,7 @@ for(csv in params_csv_list){
       
       scalar_tmp <- x[i,]
       
-      params[[scalar_tmp$name]] <- data_frame(value = as.numeric(scalar_tmp$value))
+      params[[scalar_tmp$name]] <- tibble(value = as.numeric(scalar_tmp$value))
       
     }
     
@@ -136,13 +136,13 @@ for(csv in params_csv_list){
 ###############################################
 
 # ild - Islands
-sets$ild <- data_frame(ild = c("ni", "si"))
+sets$ild <- tibble(ild = c("ni", "si"))
 
 # lvl - Levels of non-free reserves
-sets$lvl <- data_frame(lvl = paste0("lvl", 1:5))
+sets$lvl <- tibble(lvl = paste0("lvl", 1:5))
 
 # aggR - Aggregate regional entities
-sets$aggR <- data_frame(aggR = c("ni", "si", "nz"))
+sets$aggR <- tibble(aggR = c("ni", "si", "nz"))
 
 ###############################################
 ### Assign a couple of (hard-coded) scalars ###
@@ -151,10 +151,10 @@ sets$aggR <- data_frame(aggR = c("ni", "si", "nz"))
 ###############################################
 
 # largestNIplant
-params$largestNIplant <- data_frame(value = 385)
+params$largestNIplant <- tibble(value = 385)
 
 # largestSIplant
-params$largestSIplant <- data_frame(value = 125)
+params$largestSIplant <- tibble(value = 125)
 
 ###############################################
 ### Assign a couple of (hard-coded) sets ######
@@ -163,15 +163,15 @@ params$largestSIplant <- data_frame(value = 125)
 ###############################################
 
 # n
-sets$n <- data_frame(n = paste0("n", 1:as.numeric(globalVars$NumVertices)))
+sets$n <- tibble(n = paste0("n", 1:as.numeric(globalVars$NumVertices)))
 
 ## numT - number of tranches
-params$numT <- data_frame(value = as.numeric(globalVars$NumVertices) - 1)
+params$numT <- tibble(value = as.numeric(globalVars$NumVertices) - 1)
 
 ###############################################
 ### Other hard-coded assignments         ######
 ###############################################
-params$reservesAreas <- data_frame(rc = c("rc1", "rc2"), value = c(1, 1))
+params$reservesAreas <- tibble(rc = c("rc1", "rc2"), value = c(1, 1))
 
 ###############################################
 ### Tidy up (i.e. remove unwanted objects) ####
