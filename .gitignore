@@ -11,3 +11,5 @@ Programs/R/working
 *.opt
 *Obsolete
 Programs/GAMS/*.gdx
+Output/*
+!Output/placeholder.txt

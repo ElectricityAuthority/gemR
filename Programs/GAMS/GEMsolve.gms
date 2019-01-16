@@ -143,9 +143,6 @@ $include tempSets.inc
 *===============================================================================================
 * 1. Take care of preliminaries.
 
-* Stamp header for current run/runVersion into GEMsolveReport.
-*putclose rep 'Run name:' @15 "%runName%" / 'Run version:' @15 "%runVersionName%" / 'Date/time:' @15 system.date, ' - ' system.time / ;
-
 * Specify various .lst file options.
 if(%limitOutput% = 1, option limcol = 0, limrow = 0, sysout = off, solprint = off ; ) ; 
 *option solprint = on ;
@@ -424,8 +421,8 @@ $ label noGRschedule2
       display 'solve report:', slacks, penalties, solveReport ;
 
 *     Post a progress/status message to the console.
-      putclose con // '   Model: ' experiments.tl '-' steps.tl '-' scenSet.tl ' from the run %runName% and the run version %runVersionName% has finished' /
-                      '   Objective function value: ' TOTALCOST.l:<12:1 // ;
+*      putclose con // '   Model: ' experiments.tl '-' steps.tl '-' scenSet.tl ' from the run %runName% and the run version %runVersionName% has finished' /
+*                      '   Objective function value: ' TOTALCOST.l:<12:1 // ;
 
 *     If job is about to be aborted or a warning issued, post an error message in GEMsolveReport.
 *      if(counter = 1,
@@ -471,7 +468,8 @@ $ label noGRschedule2
 *     Write a GAMS-readable file of variable levels for fixing variables in subsequent models (requires GRscheduleWrite = 1).
       if(GRscheduleWrite,
         dummy.lw = 0 ; put dummy ;
-        put_utility 'ren' / "%OutPath%\%runName%\Processed files\GRschedule - %runVersionName%_" experiments.tl '_' steps.tl '_' scenSet.tl '.gms' ;
+*        put_utility 'ren' / "%OutPath%\%runName%\Processed files\GRschedule - %runVersionName%_" experiments.tl '_' steps.tl '_' scenSet.tl '.gms' ;
+        put_utility 'ren' / "%OutPath%\%runName%\Processed files\GRschedule - " experiments.tl '_' steps.tl '_' scenSet.tl '.gms' ;
         if(not sameas(steps,'dispatch'),
           put "Parameter fix_BUILD(g,y)   'New capacity installed by generating plant and year, MW' /" ;
           loop((g,y)$BUILD.l(g,y), put /  "'" g.tl "'.'" y.tl "'" BUILD.l(g,y):15:8 ) put ' /;' // ;
@@ -552,8 +550,8 @@ $     include CollectResults.inc
 
 
 * Merge the GDX files from each experiment into a single GDX - one for all output and once for the 'report only' output. Call the files 'allExperimentsXXX.gdx'.
-execute 'gdxmerge "%OutPath%\%runName%\GDX\temp\AllOut\"*.gdx output="%OutPath%\%runName%\GDX\allExperimentsAllOutput - %runName%_%runVersionName%.gdx" big=100000'
-execute 'gdxmerge "%OutPath%\%runName%\GDX\temp\RepOut\"*.gdx output="%OutPath%\%runName%\GDX\allExperimentsReportOutput - %runName%_%runVersionName%.gdx" big=100000'
+execute 'gdxmerge "%OutPath%\%runName%\GDX\temp\AllOut\"*.gdx output="%OutPath%\%runName%\GDX\allExperimentsAllOutput - %runName%.gdx" big=100000'
+execute 'gdxmerge "%OutPath%\%runName%\GDX\temp\RepOut\"*.gdx output="%OutPath%\%runName%\GDX\allExperimentsReportOutput - %runName%.gdx" big=100000'
 
 * NB: The big parameter is used to specify a cutoff for symbols that will be written one at a time. Each symbol
 * that exceeds the size will be processed by reading each gdx file and only process the data for that symbol. This
@@ -563,7 +561,7 @@ execute 'gdxmerge "%OutPath%\%runName%\GDX\temp\RepOut\"*.gdx output="%OutPath%\
 * 4. Dump selected prepared input data into a GDX file and rename/relocate a couple of log files.
 *    NB: input data is as imported from .gdx/.inc files or from intermediate steps in GEMdata.
 
-Execute_Unload "%OutPath%\%runName%\Input data checks\Selected prepared input data - %runName%_%runVersionName%.gdx",
+Execute_Unload "%OutPath%\%runName%\Input data checks\Selected prepared input data - %runName%.gdx",
 * Basic sets, subsets, and mapping sets.
   y t f fg k g o lb i r e ild ps tupg scen rc n tgc hY s
   techColor fuelColor fuelGrpColor

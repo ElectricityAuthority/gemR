@@ -19,8 +19,6 @@ library(rlist)
 
 runName <- "standard_run"
 
-# runVersionName <- "v1"
-
 runNameDesc <- "Standard run"
 
 firstYear <- "2012"
@@ -72,8 +70,6 @@ source("Programs/R/runGEM/generateGEMsetup.R")
 
 generateGEMsetup(
   runName = runName
-  # , runVersionName = runVersionName
-  , runVersionName = "v1"
   , runNameDesc = runNameDesc
   , firstYear = firstYear
   , lastYear = lastYear
@@ -114,6 +110,4 @@ source("Programs/R/generateGEMreports/GEMreporting.R")
 
 createGEMreports(
   runName = runName
-  # , runVersionName = runVersionName
-  , runVersionName = "v1"
 )

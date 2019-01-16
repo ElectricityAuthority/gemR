@@ -29,8 +29,6 @@ function(input, output, session){
       
       generateGEMsetup(
         runName = input$runName
-        # , runVersionName = input$runVersionName
-        , runVersionName = "v1"
         , runNameDesc = input$runNameDesc
         , firstYear = input$firstYear
         , lastYear = input$lastYear
@@ -102,8 +100,6 @@ function(input, output, session){
       
       createGEMreports(
         runName = input$runName
-        # , runVersionName = input$runVersionName
-        , runVersionName = "v1"
       )
       
       
@@ -125,9 +121,6 @@ function(input, output, session){
       , input$runNameResult
       , "/GDX/allExperimentsReportOutput - "
       , input$runNameResult
-      ,"_"
-      # , input$runVersionName
-      , "v1"
       , ".gdx")
     
   })
@@ -205,8 +198,6 @@ function(input, output, session){
     
     getResults(
       runName = input$runNameResult
-      # , runVersionName  = input$runVersionName
-      , runVersionName  = "v1"
       , variableName = "solveReport"
       , colNames = c("Experiments","Experiments2", "Steps", "ScenarioSets", "Variable", "Value")
     ) %>% 
@@ -222,8 +213,6 @@ function(input, output, session){
     
     totalCost <- getResults(
       runName = input$runNameResult
-      # , runVersionName  = input$runVersionName
-      , runVersionName  = "v1"
       , variableName = "s_TOTALCOST"
       , colNames = c("Experiments", "Steps", "ScenarioSets", "s_TOTALCOST")
     )
@@ -246,8 +235,6 @@ function(input, output, session){
     
     buildScheduleByPlantYr <- getResults(
       runName = input$runNameResult
-      # , runVersionName  = input$runVersionName
-      , runVersionName  = "v1"
       , variableName = "s_BUILD"
       , colNames = c("Experiments", "Steps", "ScenarioSets", "Plant", "Year", "s_BUILD")
     ) %>% 
@@ -285,8 +272,6 @@ function(input, output, session){
     ## Cumulative capacity by plant and year
     installedCapacityByPlantYr <- getResults(
       runName = input$runNameResult
-      # , runVersionName  = input$runVersionName
-      , runVersionName  = "v1"
       , variableName = "s_CAPACITY"
       , colNames = c("Experiments", "Steps", "ScenarioSets", "Plant", "Year", "s_CAPACITY")
     ) %>% 

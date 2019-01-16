@@ -20,11 +20,10 @@ $setglobal optcr "0.0075"
 $setglobal CPUsecsGEM "20000"
 $setglobal Threads "4"
 $setglobal limitOutput "0"
-$setglobal runName "standard_run2"
-$setglobal runVersionName "v1"
-$setglobal runNameDesc "Standard run2"
+$setglobal runName "standard_run_10pct"
+$setglobal runNameDesc "Standard run"
 $setglobal firstYear "2018"
-$setglobal lastYear "2023"
+$setglobal lastYear "2020"
 Scalar GRscheduleWrite / 1 / ;
 Scalar hydroOutputScalar / 0.97 / ;
 Scalar WACCg / 0.07 / ;

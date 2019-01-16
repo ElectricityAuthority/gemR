@@ -76,10 +76,6 @@ navbarPage(
                  , helpText("Choose a run name.")
                  , textInput("runName", NULL, value = "standard_run")
                  
-                 # , h4("Run version")
-                 # , helpText("Choose a run version name.")
-                 # , textInput("runVersionName", NULL, value = "v1")
-                 
                  , h4("Run description")
                  , helpText("Choose a run description.")
                  , textInput("runNameDesc", NULL, value = "Standard run")

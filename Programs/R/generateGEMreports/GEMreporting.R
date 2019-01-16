@@ -34,15 +34,13 @@ theme_set(
 ###############################################
 
 # Function for getting all results for single variable
-getResults <- function(runName, runVersionName, variableName, colNames){
+getResults <- function(runName, variableName, colNames){
   
   reportPath <- paste0(
     "Output/"
     , runName
     , "/GDX/allExperimentsReportOutput - "
     , runName
-    ,"_"
-    , runVersionName
     , ".gdx")
   
   reportItem <- rgdx.param(reportPath, variableName) %>% 
@@ -55,7 +53,7 @@ getResults <- function(runName, runVersionName, variableName, colNames){
   
 }
 
-createGEMreports <- function(runName, runVersionName){
+createGEMreports <- function(runName){
   
   ###############################################
   ### 4. Get external vars                     ##
@@ -132,7 +130,6 @@ createGEMreports <- function(runName, runVersionName){
   # Solve report
   solveReport <- getResults(
     runName = runName
-    , runVersionName  = runVersionName
     , variableName = "solveReport"
     , colNames = c("Experiments","Experiments2", "Steps", "ScenarioSets", "Variable", "Value")
   ) %>% 
@@ -143,7 +140,6 @@ createGEMreports <- function(runName, runVersionName){
   # Total cost
   totalCost <- getResults(
     runName = runName
-    , runVersionName  = runVersionName
     , variableName = "s_TOTALCOST"
     , colNames = c("Experiments", "Steps", "ScenarioSets", "s_TOTALCOST")
   )
@@ -169,7 +165,6 @@ createGEMreports <- function(runName, runVersionName){
   ## Build schedule by plant and year
   buildScheduleByPlantYr <- getResults(
     runName = runName
-    , runVersionName  = runVersionName
     , variableName = "s_BUILD"
     , colNames = c("Experiments", "Steps", "ScenarioSets", "Plant", "Year", "s_BUILD")
   ) %>% 
@@ -276,7 +271,6 @@ createGEMreports <- function(runName, runVersionName){
   ## Cumulative capacity by plant and year
   installedCapacityByPlantYr <- getResults(
     runName = runName
-    , runVersionName  = runVersionName
     , variableName = "s_CAPACITY"
     , colNames = c("Experiments", "Steps", "ScenarioSets", "Plant", "Year", "s_CAPACITY")
   ) %>% 
