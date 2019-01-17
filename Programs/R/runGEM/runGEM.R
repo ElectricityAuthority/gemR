@@ -21,9 +21,9 @@ runName <- "standard_run"
 
 runNameDesc <- "Standard run"
 
-firstYear <- "2012"
+firstYear <- "2018"
 
-lastYear <- "2013"
+lastYear <- "2023"
 
 demand_path <- "Data/Demand/Archive_20190108100602/energyDemand_2Region9LB_Standard.csv"
 

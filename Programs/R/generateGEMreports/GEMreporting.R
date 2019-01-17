@@ -192,7 +192,7 @@ createGEMreports <- function(runName){
       geom_step(alpha = 0.3, lwd = 1) +
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
-      labs(x = "Scenario sets", y = "Cumulative capacity built (MW)")
+      labs(x = "Year", y = "Cumulative capacity built (MW)")
   )
   
   dev.off()
@@ -224,7 +224,7 @@ createGEMreports <- function(runName){
       geom_step(alpha = 0.6, lwd = 1) +
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_colour_economist() +
-      labs(x = "Scenario sets", y = "Cumulative capacity built (MW)") + 
+      labs(x = "Year", y = "Cumulative capacity built (MW)") + 
       facet_wrap(~ScenarioSets)
   )
   
@@ -260,7 +260,7 @@ createGEMreports <- function(runName){
       geom_step(alpha = 0.6, lwd = 1) +
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_colour_economist() +
-      labs(x = "Scenario sets", y = "Cumulative capacity built (MW)") + 
+      labs(x = "Year", y = "Cumulative capacity built (MW)") + 
       facet_wrap(~ScenarioSets)
   )
   
@@ -293,7 +293,7 @@ createGEMreports <- function(runName){
       geom_step(alpha = 0.3, lwd = 1) +
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
-      labs(x = "Scenario sets", y = "Installed capacity (MW)")
+      labs(x = "Year", y = "Installed capacity (MW)")
   )
   
   dev.off()
@@ -321,7 +321,7 @@ createGEMreports <- function(runName){
       scale_y_continuous(labels = scales::comma_format()) +
       # ggthemes::scale_fill_economist() +
       scale_fill_brewer(palette = "Set3") +
-      labs(x = "Scenario sets", y = "Installed capacity (MW)") + 
+      labs(x = "Year", y = "Installed capacity (MW)") + 
       facet_wrap(~ScenarioSets)
   )
   
@@ -349,7 +349,7 @@ createGEMreports <- function(runName){
       geom_area(alpha = 0.6) +
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
-      labs(x = "Scenario sets", y = "Installed capacity (MW)") + 
+      labs(x = "Year", y = "Installed capacity (MW)") + 
       facet_wrap(~ScenarioSets)
   )
   
@@ -380,7 +380,7 @@ createGEMreports <- function(runName){
       geom_area(alpha = 0.6) +
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
-      labs(x = "Scenario sets", y = "Installed capacity (MW)") + 
+      labs(x = "Year", y = "Installed capacity (MW)") + 
       facet_wrap(~ScenarioSets)
   )
   

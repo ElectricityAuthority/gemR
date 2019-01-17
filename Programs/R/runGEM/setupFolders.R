@@ -7,11 +7,6 @@
 
 setupFolders <- function(runName){
   
-  # # Get runName from globalVariables file
-  # runName <- read_csv("Data/Setup/globalVariables.csv") %>%
-  #   filter(variable == "runName") %>%
-  #   .$value
-  
   # Set paths
   outPath <- paste0("Output/", runName)
   progPath <- "Programs/GAMS/"
@@ -41,8 +36,12 @@ setupFolders <- function(runName){
       file.copy(
         from = paste0(
           progPath
-          , c("GEMdeclarations.gms", "GEMdeclarations.g00", "CollectResults.inc",
-              "GEMsolve.gms")
+          , c(
+            "GEMdeclarations.gms"
+            , "GEMdeclarations.g00"
+            , "CollectResults.inc"
+            , "GEMsolve.gms"
+          )
         )
         , to = paste(paste0(outPath, "/Archive")
         )

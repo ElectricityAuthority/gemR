@@ -5,6 +5,7 @@
 config.yml
 demand_*.csv
 Programs/R/working
+Programs/GAMS/GEMsetup.inc
 *.lst
 *.lxi
 *.ref
@@ -13,3 +14,5 @@ Programs/R/working
 Programs/GAMS/*.gdx
 Output/*
 !Output/placeholder.txt
+Data/GEMsolveInput/GDX/GEMdata.gdx
+

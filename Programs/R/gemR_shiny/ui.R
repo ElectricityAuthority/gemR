@@ -51,7 +51,7 @@ navbarPage(
                # , class = "jumbotron"
                , style = "margin-top:200px;"
                , div(
-                 img(src = "img/gemR_logo2.png")
+                 img(src = "img/gemR_logo3.png")
                  # , h2("gemR :: home")
                  , tags$i(h4("Generation expansion modelling using R and GAMS"))
                  , style = "padding-top:100px;padding-bottom:100px;text-align:center;"
@@ -70,7 +70,7 @@ navbarPage(
                  
                  width = 3
                  , class = "jumbotron"
-                 , h3("Run GEM model")
+                 , h3("Run GEM")
                  
                  , h4("Run name")
                  , helpText("Choose a run name.")

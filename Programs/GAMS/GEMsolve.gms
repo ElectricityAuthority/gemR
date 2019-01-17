@@ -137,8 +137,8 @@ peakLoadNI(y,scen) = scenarioPeakLoadFactor(scen) * i_P200ratioNI(y) * ( 1 / 8.7
 * Transfer hydro output for all historical hydro years from i_historicalHydroOutput to historicalHydroOutput (no scenario-specific adjustment factors at this time).
 historicalHydroOutput(v,hY,m) = i_historicalHydroOutput(v,hY,m) ;
 
-* Include tempSets 
-$include tempSets.inc
+** Include tempSets 
+*$include tempSets.inc
 
 *===============================================================================================
 * 1. Take care of preliminaries.
@@ -565,7 +565,8 @@ Execute_Unload "%OutPath%\%runName%\Input data checks\Selected prepared input da
 * Basic sets, subsets, and mapping sets.
   y t f fg k g o lb i r e ild ps tupg scen rc n tgc hY s
   techColor fuelColor fuelGrpColor
-  mapg_k mapg_o mapg_e mapg_f mapf_fg maps_r mapg_r mapild_r mapAggR_r avgDispatchSteptoRepStep allAvgDispatchSolves allNotAvgDispatchSolves
+  mapg_k mapg_o mapg_e mapg_f mapf_fg maps_r mapg_r mapild_r mapAggR_r
+*  avgDispatchSteptoRepStep allAvgDispatchSolves allNotAvgDispatchSolves
   isIldEqReg firstPeriod firstYr lastYr allButFirstYr
   paths nwd swd interIsland pumpedHydroPlant wind gas diesel
   thermalFuel i_fuelQuantities renew schedHydroPlant trnch demandGen 
