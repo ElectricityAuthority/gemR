@@ -25,15 +25,15 @@ source("Programs/R/runGEM/archiveGEMdataGDX.R")
 source("Programs/R/generateGEMreports/GEMreporting.R")
 
 # ggplot shared settings
-theme_set(
-  theme_bw() +
-    theme(
-      axis.text = element_text(size = 8)
-      , axis.title = element_text(size = 10)
-      , legend.text = element_text(size = 8)
-      , legend.title = element_text(size = 10)
-    )
-)
+# theme_set(
+#   theme_bw() +
+#     theme(
+#       axis.text = element_text(size = 8)
+#       , axis.title = element_text(size = 10)
+#       , legend.text = element_text(size = 8)
+#       , legend.title = element_text(size = 10)
+#     )
+# )
 
 navbarPage(
   
@@ -86,7 +86,7 @@ navbarPage(
                  
                  , h4("Last year")
                  , helpText("Choose last year.")
-                 , textInput("lastYear", NULL, value = "2023")
+                 , textInput("lastYear", NULL, value = "2028")
                  
                  , h4("Demand file path")
                  , helpText("Load demand file.")
@@ -198,6 +198,10 @@ navbarPage(
         , ".navbar-default {background-color: #00346b;}"
         , "body {font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;}"
         , ".navbar-default .navbar-nav>li>a:hover, .navbar-default .navbar-nav>li>a:focus {color: white;}"
+        , ".progress-bar {background-color: #3397c8;}"
+        , ".btn {background: #3397c8; border-color: #3397c8;}"
+        , ".btn:hover, .btn:active, .btn:focus, .btn:active:focus, .btn:active:hover {background: #3397c8; border-color: #3397c8; opacity: 0.7;}"
+        , "a, a:hover, a:focus {color: #3397c8;}"
       )
     )
   )

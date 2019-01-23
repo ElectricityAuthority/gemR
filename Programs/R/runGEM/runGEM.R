@@ -23,9 +23,9 @@ runNameDesc <- "Standard run"
 
 firstYear <- "2018"
 
-lastYear <- "2023"
+lastYear <- "2028"
 
-demand_path <- "Data/Demand/Archive_20190108100602/energyDemand_2Region9LB_Standard.csv"
+demand_path <- "Data/Demand/i_NrgDemand_2Region9LB_Standard.csv"
 
 GEMdeclarationsFlag <- FALSE
 

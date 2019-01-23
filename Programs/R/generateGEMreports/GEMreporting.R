@@ -30,7 +30,7 @@ theme_set(
 )
 
 ###############################################
-### 3. Functions                             ##
+### 3. Get results                           ##
 ###############################################
 
 # Function for getting all results for single variable
@@ -53,17 +53,49 @@ getResults <- function(runName, variableName, colNames){
   
 }
 
-createGEMreports <- function(runName){
+# Function for getting all results for single variable from multiple runs
+getResultsAll <- function(runName, variableName, colNames){
   
-  ###############################################
-  ### 4. Get external vars                     ##
-  ###############################################
+  resultsAll <- tibble()
+  
+  for(i in 1:length(runName)){
+    
+    reportPath <- paste0(
+      "Output/"
+      , runName[i]
+      , "/GDX/allExperimentsReportOutput - "
+      , runName[i]
+      , ".gdx")
+    
+    reportItem <- rgdx.param(reportPath, variableName) %>% 
+      mutate_if(is.factor, as.character) %>% 
+      as_tibble()
+    
+    colnames(reportItem) <- colNames
+    
+    reportItem$runName <- runName[i]
+    
+    resultsAll <- bind_rows(resultsAll, reportItem)
+    
+  }
+  
+  return(resultsAll)
+  
+}
+
+###############################################
+### 4. Get external vars                     ##
+###############################################
+
+getExternalVars <- function(runName){
   
   # Read in GEMsolve output GDX to use some subsets etc.
   GEMsolveGDX_path <- paste0("Output/", runName, "/GEMsolve_", runName, ".gdx")
   
+  tmp <- list()
+  
   ## Map generation to technology
-  mapg_k <- rgdx.set(GEMsolveGDX_path, "mapg_k") %>% 
+  tmp$mapg_k <- rgdx.set(GEMsolveGDX_path, "mapg_k") %>% 
     mutate_if(is.factor, as.character) %>% 
     rename(
       Plant = g
@@ -72,7 +104,7 @@ createGEMreports <- function(runName){
     as_tibble()
   
   ## Map generation to fuel
-  mapg_f <- rgdx.set(GEMsolveGDX_path, "mapg_f") %>% 
+  tmp$mapg_f <- rgdx.set(GEMsolveGDX_path, "mapg_f") %>% 
     mutate_if(is.factor, as.character) %>% 
     rename(
       Plant = g
@@ -81,7 +113,7 @@ createGEMreports <- function(runName){
     as_tibble()
   
   ## Map generation to island
-  mapg_ild <- rgdx.set(GEMsolveGDX_path, "mapg_ild") %>% 
+  tmp$mapg_ild <- rgdx.set(GEMsolveGDX_path, "mapg_ild") %>% 
     mutate_if(is.factor, as.character) %>% 
     rename(
       Plant = g
@@ -89,19 +121,19 @@ createGEMreports <- function(runName){
     ) %>% 
     as_tibble()
   
-  ## s_GEN - Generation by generating plant and block, GWh
-  s_GEN <- rgdx.param(GEMsolveGDX_path, "s_GEN") %>% 
-    mutate_if(is.factor, as.character) %>% 
-    rename(
-      Plant = g
-      , Year = y
-      , Period = t
-      , LoadBlock = lb
-    ) %>% 
-    as_tibble()
+  # ## s_GEN - Generation by generating plant and block, GWh
+  # tmp$s_GEN <- rgdx.param(GEMsolveGDX_path, "s_GEN") %>% 
+  #   mutate_if(is.factor, as.character) %>% 
+  #   rename(
+  #     Plant = g
+  #     , Year = y
+  #     , Period = t
+  #     , LoadBlock = lb
+  #   ) %>% 
+  #   as_tibble()
   
   ## i_heatrate - heat rate (GJ/GWh)
-  i_heatrate <- rgdx.param(GEMsolveGDX_path, "i_heatrate") %>% 
+  tmp$i_heatrate <- rgdx.param(GEMsolveGDX_path, "i_heatrate") %>% 
     mutate_if(is.factor, as.character) %>% 
     rename(
       Plant = g
@@ -109,23 +141,28 @@ createGEMreports <- function(runName){
     as_tibble()
   
   ## i_emissionFactors - CO2e emissions, toness CO2/PJ
-  i_emissionFactors <- rgdx.param(GEMsolveGDX_path, "i_emissionFactors") %>% 
+  tmp$i_emissionFactors <- rgdx.param(GEMsolveGDX_path, "i_emissionFactors") %>% 
     mutate_if(is.factor, as.character) %>% 
     rename(
       Fuel = f
     ) %>% 
     as_tibble()
   
-  ###############################################
-  ### 5. Plots etc.                            ##
-  ###############################################
+  return(tmp)
   
-  # Create Report output folder
-  if(!file.exists(paste0("Output/", runName, "/Report"))){
-    
-    dir.create(paste0("Output/", runName, "/Report"))
-    
-  }
+}
+
+createGEMreports <- function(runName){
+  
+  # Set output path
+  outPath <- paste0("Output/", runName)
+  
+  # Load external variables
+  extVars <- getExternalVars(runName = runName)
+  
+  ###############################################
+  ### 5. Plots/reports                         ##
+  ###############################################
   
   # Solve report
   solveReport <- getResults(
@@ -135,7 +172,7 @@ createGEMreports <- function(runName){
   ) %>% 
     select(-Experiments2)
   
-  write_csv(solveReport, paste0("Output/", runName, "/Report/solveReport.csv"))
+  write_csv(solveReport, paste0(outPath, "/Report/solveReport.csv"))
   
   # Total cost
   totalCost <- getResults(
@@ -144,18 +181,39 @@ createGEMreports <- function(runName){
     , colNames = c("Experiments", "Steps", "ScenarioSets", "s_TOTALCOST")
   )
   
-  png(file = paste0("Output/", runName, "/Report/totalCost.png")
+  totalCostAvgDisp <-  totalCost %>% 
+    filter(Steps == "dispatch") %>% 
+    group_by(Experiments) %>% 
+    summarise(s_TOTALCOST = mean(s_TOTALCOST)) %>% 
+    mutate(
+      ScenarioSets = "AvgDispatch"
+      , grp = "average"
+    )
+  
+  png(file = paste0(outPath, "/Report/totalCost.png")
       , width = 18.5, height = 10.5, units = "cm", res = 1000)
   
   print(
     totalCost %>% 
-      mutate(Steps = str_to_title(Steps)) %>% 
-      ggplot(aes(reorder(ScenarioSets, s_TOTALCOST), s_TOTALCOST, fill = Steps)) +
+      filter(Steps == "dispatch") %>% 
+      mutate(grp = "disp") %>% 
+      union_all(
+        totalCostAvgDisp
+      ) %>% 
+      ggplot(aes(reorder(ScenarioSets, s_TOTALCOST), s_TOTALCOST, fill = grp)) +
       geom_bar(stat = "identity", alpha = 0.6, width = 0.7) +
       scale_y_continuous(labels = scales::dollar_format()) +
-      ggthemes::scale_fill_economist() +
+      scale_fill_manual(
+        values = c("disp" = "lightsteelblue", "average" = "steelblue")
+        , guide = FALSE) +
       labs(x = "Scenario sets", y = "Total cost ($million)") + 
-      facet_wrap(~Experiments)
+      facet_wrap(~Experiments) +
+      geom_text(
+        data = totalCostAvgDisp
+        , aes(label = paste0(scales::dollar(s_TOTALCOST, accuracy = 1), " mill"), vjust = 1.25)
+        , colour = "white"
+        , size = 2
+      )
   )
   
   dev.off()
@@ -183,16 +241,37 @@ createGEMreports <- function(runName){
     ) %>% 
     ungroup()
   
-  png(file = paste0("Output/", runName, "/Report/buildScheduleTotalYr.png")
+  buildScheduleTotalYrAvgDisp <-  buildScheduleTotalYr %>% 
+    filter(Steps == "dispatch") %>% 
+    group_by(Experiments, Year) %>% 
+    summarise(s_BUILD = mean(s_BUILD)) %>% 
+    mutate(
+      s_BUILD_cumsum = cumsum(s_BUILD)
+      , ScenarioSets = "AvgDispatch"
+      , grp = "average"
+    )
+  
+  png(file = paste0(outPath, "/Report/buildScheduleTotalYr.png")
       , width = 18.5, height = 10.5, units = "cm", res = 1000)
   
   print(
     buildScheduleTotalYr %>% 
-      ggplot(aes(Year, s_BUILD_cumsum, colour = ScenarioSets, group = ScenarioSets)) +
-      geom_step(alpha = 0.3, lwd = 1) +
+      filter(Steps == "dispatch") %>% 
+      mutate(grp = "disp") %>% 
+      union_all(
+        buildScheduleTotalYrAvgDisp
+      ) %>% 
+      ggplot(aes(Year, s_BUILD_cumsum, colour = grp, group = grp)) +
+      geom_step(alpha = 0.6, lwd = 1) +
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
-      labs(x = "Year", y = "Cumulative capacity built (MW)")
+      labs(x = "Year", y = "Cumulative capacity built (MW)") +
+      scale_colour_manual(
+        values = c("disp" = "lightsteelblue", "average" = "steelblue")
+        , guide = FALSE
+      ) + 
+      facet_wrap(~Experiments) +
+      expand_limits(y = 0)
   )
   
   dev.off()
@@ -200,7 +279,7 @@ createGEMreports <- function(runName){
   ## Build schedule by technology and year
   buildScheduleByTechYr <- buildScheduleByPlantYr %>% 
     inner_join(
-      mapg_k
+      extVars$mapg_k
       , by = "Plant"
     ) %>% 
     group_by_at(vars(-c(Plant, s_BUILD))) %>% 
@@ -215,25 +294,48 @@ createGEMreports <- function(runName){
     ) %>% 
     ungroup()
   
-  png(file = paste0("Output/", runName, "/Report/buildScheduleByTechYr.png")
+  buildScheduleByTechYrAvgDisp <-  buildScheduleByTechYr %>% 
+    filter(Steps == "dispatch") %>% 
+    group_by(Experiments, Year, Technology) %>% 
+    summarise(s_BUILD = mean(s_BUILD)) %>% 
+    ungroup() %>% 
+    group_by(Experiments, Technology) %>% 
+    mutate(
+      s_BUILD_cumsum = cumsum(s_BUILD)
+      , ScenarioSets = "AvgDispatch"
+      , grp = "average"
+    )
+  
+  png(file = paste0(outPath, "/Report/buildScheduleByTechYr.png")
       , width = 18.5, height = 10.5, units = "cm", res = 1000)
   
   print(
     buildScheduleByTechYr %>% 
-      ggplot(aes(Year, s_BUILD_cumsum, colour = Technology, group = Technology)) +
+      filter(Steps == "dispatch") %>% 
+      mutate(grp = "disp") %>% 
+      union_all(
+        buildScheduleByTechYrAvgDisp
+      ) %>% 
+      ggplot(aes(Year, s_BUILD_cumsum, colour = grp, group = grp)) +
       geom_step(alpha = 0.6, lwd = 1) +
       scale_y_continuous(labels = scales::comma_format()) +
-      ggthemes::scale_colour_economist() +
-      labs(x = "Year", y = "Cumulative capacity built (MW)") + 
-      facet_wrap(~ScenarioSets)
+      ggthemes::scale_fill_economist() +
+      labs(x = "Year", y = "Cumulative capacity built (MW)") +
+      scale_colour_manual(
+        values = c("disp" = "lightsteelblue", "average" = "steelblue")
+        , guide = FALSE
+      ) + 
+      facet_wrap(~Experiments + Technology) +
+      expand_limits(y = 0)
   )
   
   dev.off()
   
   ## Build schedule by island and year
+  
   buildScheduleByIslandYr <- buildScheduleByPlantYr %>% 
     inner_join(
-      mapg_ild
+      extVars$mapg_ild
       , by = "Plant"
     ) %>% 
     group_by_at(vars(-c(Plant, s_BUILD))) %>% 
@@ -246,22 +348,44 @@ createGEMreports <- function(runName){
     mutate(
       s_BUILD_cumsum = cumsum(s_BUILD)
     ) %>% 
-    ungroup() 
+    ungroup()
   
-  png(file = paste0("Output/", runName, "/Report/buildScheduleByIslandYr.png")
+  buildScheduleByIslandYrAvgDisp <-  buildScheduleByIslandYr %>% 
+    filter(Steps == "dispatch") %>% 
+    group_by(Experiments, Year, Island) %>% 
+    summarise(s_BUILD = mean(s_BUILD)) %>% 
+    ungroup() %>% 
+    group_by(Experiments, Island) %>% 
+    mutate(
+      s_BUILD_cumsum = cumsum(s_BUILD)
+      , ScenarioSets = "AvgDispatch"
+      , grp = "average"
+    )
+  
+  png(file = paste0(outPath, "/Report/buildScheduleByIslandYr.png")
       , width = 18.5, height = 10.5, units = "cm", res = 1000)
   
   print(
     buildScheduleByIslandYr %>% 
+      filter(Steps == "dispatch") %>% 
+      mutate(grp = "disp") %>% 
+      union_all(
+        buildScheduleByIslandYrAvgDisp
+      ) %>% 
       mutate(
         Island = str_to_upper(Island)
       ) %>% 
-      ggplot(aes(Year, s_BUILD_cumsum, colour = Island, group = Island)) +
+      ggplot(aes(Year, s_BUILD_cumsum, colour = grp, group = grp)) +
       geom_step(alpha = 0.6, lwd = 1) +
       scale_y_continuous(labels = scales::comma_format()) +
-      ggthemes::scale_colour_economist() +
-      labs(x = "Year", y = "Cumulative capacity built (MW)") + 
-      facet_wrap(~ScenarioSets)
+      ggthemes::scale_fill_economist() +
+      labs(x = "Year", y = "Cumulative capacity built (MW)") +
+      scale_colour_manual(
+        values = c("disp" = "lightsteelblue", "average" = "steelblue")
+        , guide = FALSE
+      ) + 
+      facet_wrap(~Experiments + Island) +
+      expand_limits(y = 0)
   )
   
   dev.off()
@@ -280,77 +404,117 @@ createGEMreports <- function(runName){
   installedCapacityTotalYr <- installedCapacityByPlantYr %>%  
     group_by_at(vars(-c(Plant, s_CAPACITY))) %>% 
     summarise(
-      s_CAPACITY_cumsum = sum(s_CAPACITY)
+      s_CAPACITY = sum(s_CAPACITY)
     ) %>% 
-    ungroup()
+    ungroup() 
   
-  png(file = paste0("Output/", runName, "/Report/installedCapacityTotalYr.png")
+  installedCapacityTotalYrAvgDisp <-  installedCapacityTotalYr %>% 
+    filter(Steps == "dispatch") %>% 
+    group_by(Experiments, Year) %>% 
+    summarise(s_CAPACITY = mean(s_CAPACITY)) %>% 
+    mutate(
+      ScenarioSets = "AvgDispatch"
+      , grp = "average"
+    )
+  
+  png(file = paste0(outPath, "/Report/installedCapacityTotalYr.png")
       , width = 18.5, height = 10.5, units = "cm", res = 1000)
   
   print(
     installedCapacityTotalYr %>% 
-      ggplot(aes(Year, s_CAPACITY_cumsum, colour = ScenarioSets, group = ScenarioSets)) +
-      geom_step(alpha = 0.3, lwd = 1) +
+      filter(Steps == "dispatch") %>% 
+      mutate(grp = "disp") %>% 
+      union_all(
+        installedCapacityTotalYrAvgDisp
+      ) %>% 
+      ggplot(aes(Year, s_CAPACITY, colour = grp, group = grp)) +
+      geom_step(alpha = 0.6, lwd = 1) +
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
-      labs(x = "Year", y = "Installed capacity (MW)")
+      labs(x = "Year", y = "Installed capacity (MW)") +
+      scale_colour_manual(
+        values = c("disp" = "lightsteelblue", "average" = "steelblue")
+        , guide = FALSE
+      ) + 
+      facet_wrap(~Experiments)
   )
   
   dev.off()
   
-  ## Installed capacity by technology and year
-  installedCapacityByTechYr <- installedCapacityByPlantYr %>% 
-    inner_join(
-      mapg_k
-      , by = "Plant"
-    ) %>% 
-    group_by_at(vars(-c(Plant, s_CAPACITY))) %>% 
-    summarise(
-      s_CAPACITY_cumsum = sum(s_CAPACITY)
-    ) %>% 
-    arrange(Experiments, Steps, ScenarioSets, Technology, Year) %>% 
-    ungroup() 
-  
-  png(file = paste0("Output/", runName, "/Report/installedCapacityByTechYr.png")
-      , width = 18.5, height = 10.5, units = "cm", res = 1000)
-  
-  print(
-    installedCapacityByTechYr %>%  
-      ggplot(aes(Year, s_CAPACITY_cumsum, fill = Technology, group = Technology)) +
-      geom_area(alpha = 0.6) +
-      scale_y_continuous(labels = scales::comma_format()) +
-      # ggthemes::scale_fill_economist() +
-      scale_fill_brewer(palette = "Set3") +
-      labs(x = "Year", y = "Installed capacity (MW)") + 
-      facet_wrap(~ScenarioSets)
-  )
-  
-  dev.off()
+  # ## Installed capacity by technology and year
+  # installedCapacityByTechYr <- installedCapacityByPlantYr %>% 
+  #   inner_join(
+  #     extVars$mapg_k
+  #     , by = "Plant"
+  #   ) %>% 
+  #   group_by_at(vars(-c(Plant, s_CAPACITY))) %>% 
+  #   summarise(
+  #     s_CAPACITY = sum(s_CAPACITY)
+  #   ) %>% 
+  #   arrange(Experiments, Steps, ScenarioSets, Technology, Year) %>% 
+  #   ungroup()
+  # 
+  # installedCapacityByTechYrAvgDisp <-  installedCapacityByTechYr %>% 
+  #   filter(Steps == "dispatch") %>% 
+  #   group_by(Experiments, Year, Technology) %>% 
+  #   summarise(s_CAPACITY = mean(s_CAPACITY)) %>% 
+  #   arrange(Experiments, Technology, Year) %>% 
+  #   ungroup() %>% 
+  #   mutate(
+  #     ScenarioSets = "AvgDispatch"
+  #     , grp = "average"
+  #   )
+  # 
+  # png(file = paste0(outPath, "/Report/installedCapacityByTechYr.png")
+  #     , width = 18.5, height = 10.5, units = "cm", res = 1000)
+  # 
+  # print(
+  #   installedCapacityByTechYrAvgDisp %>% 
+  #     ggplot(aes(Year, s_CAPACITY, fill = Technology, group = Technology)) +
+  #     geom_area(alpha = 0.6) +
+  #     scale_y_continuous(labels = scales::comma_format()) +
+  #     scale_fill_brewer(palette = "Set3") +
+  #     labs(x = "Year", y = "Installed capacity (MW)") + 
+  #     facet_wrap(~Experiments)
+  # )
+  # 
+  # dev.off()
   
   ## Installed capacity by fuel and year
   installedCapacityByFuelYr <- installedCapacityByPlantYr %>% 
     inner_join(
-      mapg_f
+      extVars$mapg_f
       , by = "Plant"
     ) %>% 
     group_by_at(vars(-c(Plant, s_CAPACITY))) %>% 
     summarise(
-      s_CAPACITY_cumsum = sum(s_CAPACITY)
+      s_CAPACITY = sum(s_CAPACITY)
     ) %>% 
     arrange(Experiments, Steps, ScenarioSets, Fuel, Year) %>% 
-    ungroup() 
+    ungroup()
   
-  png(file = paste0("Output/", runName, "/Report/installedCapacityByFuelYr.png")
+  installedCapacityByFuelYrAvgDisp <-  installedCapacityByFuelYr %>% 
+    filter(Steps == "dispatch") %>% 
+    group_by(Experiments, Year, Fuel) %>% 
+    summarise(s_CAPACITY = mean(s_CAPACITY)) %>% 
+    arrange(Experiments, Fuel, Year) %>% 
+    ungroup() %>% 
+    mutate(
+      ScenarioSets = "AvgDispatch"
+      , grp = "average"
+    )
+  
+  png(file = paste0(outPath, "/Report/installedCapacityByFuelYr.png")
       , width = 18.5, height = 10.5, units = "cm", res = 1000)
   
   print(
-    installedCapacityByFuelYr %>%  
-      ggplot(aes(Year, s_CAPACITY_cumsum, fill = Fuel, group = Fuel)) +
+    installedCapacityByFuelYrAvgDisp %>% 
+      ggplot(aes(Year, s_CAPACITY, fill = Fuel, group = Fuel)) +
       geom_area(alpha = 0.6) +
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
       labs(x = "Year", y = "Installed capacity (MW)") + 
-      facet_wrap(~ScenarioSets)
+      facet_wrap(~Experiments)
   )
   
   dev.off()
@@ -358,35 +522,54 @@ createGEMreports <- function(runName){
   ## Installed capacity by island and year
   installedCapacityByIslandYr <- installedCapacityByPlantYr %>% 
     inner_join(
-      mapg_ild
+      extVars$mapg_ild
       , by = "Plant"
     ) %>% 
     group_by_at(vars(-c(Plant, s_CAPACITY))) %>% 
     summarise(
-      s_CAPACITY_cumsum = sum(s_CAPACITY)
+      s_CAPACITY = sum(s_CAPACITY)
     ) %>% 
     arrange(Experiments, Steps, ScenarioSets, Island, Year) %>% 
-    ungroup() 
+    ungroup()
   
-  png(file = paste0("Output/", runName, "/Report/installedCapacityByIslandYr.png")
+  installedCapacityByIslandYrAvgDisp <-  installedCapacityByIslandYr %>% 
+    filter(Steps == "dispatch") %>% 
+    group_by(Experiments, Year, Island) %>% 
+    summarise(s_CAPACITY = mean(s_CAPACITY)) %>% 
+    arrange(Experiments, Island, Year) %>% 
+    ungroup() %>% 
+    mutate(
+      ScenarioSets = "AvgDispatch"
+      , grp = "average"
+    )
+  
+  png(file = paste0(outPath, "/Report/installedCapacityByIslandYr.png")
       , width = 18.5, height = 10.5, units = "cm", res = 1000)
   
   print(
-    installedCapacityByIslandYr %>% 
-      mutate(
-        Island = str_to_upper(Island)
-      ) %>% 
-      ggplot(aes(Year, s_CAPACITY_cumsum, fill = Island, group = Island)) +
+    installedCapacityByIslandYrAvgDisp %>% 
+      mutate(Island = str_to_upper(Island)) %>% 
+      ggplot(aes(Year, s_CAPACITY, fill = Island, group = Island)) +
       geom_area(alpha = 0.6) +
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
       labs(x = "Year", y = "Installed capacity (MW)") + 
-      facet_wrap(~ScenarioSets)
+      facet_wrap(~Experiments)
   )
   
   dev.off()
   
   # Emissions
+  
+  s_GEN <- getResults(
+    runName = runName
+    , variableName = "s_GEN"
+    , colNames = c(
+      "Experiments", "Steps", "ScenarioSets", 
+      "Plant", "Year", "Period", "LoadBlock",
+      "scenarios", "s_GEN"
+    )
+  ) 
   
   ## CO2e emissions by plant and year
   emissionsByPlantYear <- s_GEN %>% 
@@ -394,15 +577,15 @@ createGEMreports <- function(runName){
     summarise(s_GEN = sum(s_GEN)) %>% 
     ungroup() %>% 
     inner_join(
-      i_heatrate
+      extVars$i_heatrate
       , by = "Plant"
     ) %>% 
     inner_join(
-      mapg_f
+      extVars$mapg_f
       , by = "Plant"
     ) %>% 
     inner_join(
-      i_emissionFactors
+      extVars$i_emissionFactors
       , by = "Fuel"
     ) %>% 
     mutate(
@@ -413,39 +596,66 @@ createGEMreports <- function(runName){
   
   ## Total CO2e emissions by year
   emissionsTotalByYear <- emissionsByPlantYear %>% 
-    group_by(steps, scenarioSets, scenarios, Year) %>% 
+    group_by(Experiments, Steps, ScenarioSets, scenarios, Year) %>% 
     summarise(CO2e_mill_tonnes = sum(CO2e_mill_tonnes))
   
-  png(file = paste0("Output/", runName, "/Report/emissionsTotalByYear.png")
+  emissionsTotalByYearAvgDisp <-  emissionsTotalByYear %>% 
+    filter(Steps == "dispatch") %>% 
+    group_by(Experiments, Year) %>% 
+    summarise(CO2e_mill_tonnes = mean(CO2e_mill_tonnes)) %>% 
+    mutate(
+      ScenarioSets = "AvgDispatch"
+      , grp = "average"
+    )
+  
+  png(file = paste0(outPath, "/Report/emissionsTotalByYear.png")
       , width = 18.5, height = 10.5, units = "cm", res = 1000)
   
   print(
     emissionsTotalByYear %>% 
-      ggplot(aes(Year, CO2e_mill_tonnes, colour = scenarioSets, group = scenarioSets)) +
+      filter(Steps == "dispatch") %>% 
+      mutate(grp = "disp") %>% 
+      union_all(
+        emissionsTotalByYearAvgDisp
+      ) %>% 
+      ggplot(aes(Year, CO2e_mill_tonnes, colour = grp, group = scenarios)) +
       geom_line(lwd = 1, alpha = 0.6) +
       scale_y_continuous(labels = scales::comma_format()) +
-      ggthemes::scale_colour_economist() +
-      labs(x = "Year", y = "CO2e emissions (million tonnes)") 
+      labs(x = "Year", y = "CO2e emissions (million tonnes)") +
+      scale_colour_manual(
+        values = c("disp" = "lightsteelblue", "average" = "steelblue")
+        , guide = FALSE
+      ) +
+      expand_limits(y = 0)
   )
   
   dev.off()
   
   ## CO2e emissions by fuel and year
   emissionsByFuelYear <- emissionsByPlantYear %>% 
-    group_by(steps, scenarioSets, scenarios, Fuel, Year) %>% 
+    group_by(Experiments, Steps, ScenarioSets, scenarios, Fuel, Year) %>% 
     summarise(CO2e_mill_tonnes = sum(CO2e_mill_tonnes))
   
-  png(file = paste0("Output/", runName, "/Report/emissionsByFuelYear.png")
+  emissionsByFuelYearAvgDisp <-  emissionsByFuelYear %>% 
+    filter(Steps == "dispatch") %>% 
+    group_by(Experiments, Fuel, Year) %>% 
+    summarise(CO2e_mill_tonnes = mean(CO2e_mill_tonnes)) %>% 
+    mutate(
+      ScenarioSets = "AvgDispatch"
+      , grp = "average"
+    )
+  
+  png(file = paste0(outPath, "/Report/emissionsByFuelYear.png")
       , width = 18.5, height = 10.5, units = "cm", res = 1000)
   
   print(
-    emissionsByFuelYear %>% 
+    emissionsByFuelYearAvgDisp %>% 
       ggplot(aes(Year, CO2e_mill_tonnes, fill = Fuel, group = Fuel)) +
       geom_area(alpha = 0.6) +
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
       labs(x = "Year", y = "CO2e emissions (million tonnes)") + 
-      facet_wrap(~scenarioSets)
+      facet_wrap(~Experiments)
   )
   
   dev.off()
