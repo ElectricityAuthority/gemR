@@ -108,6 +108,4 @@ executeGAMS(
 ###############################################
 source("Programs/R/generateGEMreports/GEMreporting.R")
 
-createGEMreports(
-  runName = runName
-)
+createGEMreports(runName = runName)

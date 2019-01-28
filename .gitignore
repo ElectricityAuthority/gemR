@@ -10,9 +10,9 @@ Programs/GAMS/GEMsetup.inc
 *.lxi
 *.ref
 *.opt
+*.put
 *Obsolete
 Programs/GAMS/*.gdx
 Output/*
 !Output/placeholder.txt
 Data/GEMsolveInput/GDX/GEMdata.gdx
-

@@ -3,7 +3,7 @@ library(tidyverse)
 library(readtext)
 library(shiny)
 library(shinythemes)
-library(highcharter)
+# library(highcharter)
 library(gdxtools)
 library(gdxrrw)
 library(rlist)
@@ -25,15 +25,15 @@ source("Programs/R/runGEM/archiveGEMdataGDX.R")
 source("Programs/R/generateGEMreports/GEMreporting.R")
 
 # ggplot shared settings
-# theme_set(
-#   theme_bw() +
-#     theme(
-#       axis.text = element_text(size = 8)
-#       , axis.title = element_text(size = 10)
-#       , legend.text = element_text(size = 8)
-#       , legend.title = element_text(size = 10)
-#     )
-# )
+theme_set(
+  theme_bw() +
+    theme(
+      axis.text = element_text(size = 8)
+      , axis.title = element_text(size = 10)
+      , legend.text = element_text(size = 8)
+      , legend.title = element_text(size = 10)
+    )
+)
 
 navbarPage(
   
@@ -135,14 +135,15 @@ navbarPage(
                  , h3("GEM results")
                  
                  , h4("Run name")
-                 , helpText("Choose a run name from the list.")
+                 , helpText("Select a list of runs to compare.")
                  , selectizeInput(
-                   "runNameResult"
+                   "runNameList"
                    , NULL
                    , choices = c("", list.dirs("Output", recursive = FALSE, full.names = FALSE))
+                   , multiple = TRUE
                  )
                  
-                 , h4("Update run list")
+                 , h4("Refresh run list")
                  , helpText("For when a new run has completed.")
                  , actionButton("updateSelect", "Update", class = "btn-primary")
                )
@@ -153,11 +154,6 @@ navbarPage(
                  , tabsetPanel(
                    
                    tabPanel(
-                     "Solve report"
-                     , DT::dataTableOutput("solveReport")
-                   )
-                   
-                   , tabPanel(
                      "Total cost"
                      , plotOutput("totalCost", height = "800px")
                    )
@@ -166,7 +162,7 @@ navbarPage(
                      "Build schedule (total by year)"
                      , plotOutput("buildScheduleTotalYr", height = "800px")
                    )
-                   
+
                    , tabPanel(
                      "Installed capacity (by fuel type and year)"
                      , plotOutput("installedCapacityByFuelYr", height = "800px")
@@ -175,6 +171,11 @@ navbarPage(
                    , tabPanel(
                      "CO2-e emissions (by fuel type and year)"
                      , plotOutput("emissionsByFuelYear", height = "800px")
+                   )
+                   
+                   , tabPanel(
+                     "Generation (by fuel type and year)"
+                     , plotOutput("generationByFuelYear", height = "800px")
                    )
                  )
                  

@@ -30,6 +30,8 @@ setupFolders <- function(runName){
     dir.create(paste0(outPath, "/GDX/temp/RepOut"))
     dir.create(paste0(outPath, "/Processed files"))
     dir.create(paste0(outPath, "/Report"))
+    dir.create(paste0(outPath, "/Report/plots"))
+    dir.create(paste0(outPath, "/Report/csv"))
     dir.create(paste0(outPath, "/Input data checks"))
     
     # Copy files in to Archive

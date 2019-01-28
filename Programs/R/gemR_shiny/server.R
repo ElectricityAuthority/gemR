@@ -92,7 +92,7 @@ function(input, output, session){
       )
       
       ###############################################
-      ### 11. Create reports                       ##
+      ### Create reports                           ##
       ###############################################
       incProgress(0.3
                   , message = "Creating reports..."
@@ -102,246 +102,144 @@ function(input, output, session){
         runName = input$runName
       )
       
-      
-      
     })
   })
   
-  # Reporting
-  
-  ## Get external vars
-  
-  # Read in GEMsolve output GDX to use some subsets etc.
-  GEMsolveGDX_path <- reactive({paste0("Output/", input$runNameResult, "/GEMsolve_", input$runNameResult, ".gdx")})
-  
-  GEMreport_path <- reactive({
-    
-    paste0(
-      "Output/"
-      , input$runNameResult
-      , "/GDX/allExperimentsReportOutput - "
-      , input$runNameResult
-      , ".gdx")
-    
-  })
-  
-  ## Map generation to technology
-  mapg_k <- reactive({
-    rgdx.set(GEMsolveGDX_path(), "mapg_k") %>% 
-      mutate_if(is.factor, as.character) %>% 
-      rename(
-        Plant = g
-        , Technology = k
-      ) %>% 
-      as_tibble()
-  })
-  
-  ## Map generation to fuel
-  mapg_f <- reactive({
-    rgdx.set(GEMsolveGDX_path(), "mapg_f") %>% 
-      mutate_if(is.factor, as.character) %>% 
-      rename(
-        Plant = g
-        , Fuel = f
-      ) %>% 
-      as_tibble()
-  })
-  
-  ## Map generation to island
-  mapg_ild <- reactive({
-    rgdx.set(GEMsolveGDX_path(), "mapg_ild") %>%
-      mutate_if(is.factor, as.character) %>%
-      rename(
-        Plant = g
-        , Island = ild
-      ) %>%
-      as_tibble()
-  })
-  
-  ## s_GEN - Generation by generating plant and block, GWh
-  s_GEN <- reactive({
-    rgdx.param(GEMsolveGDX_path(), "s_GEN") %>%
-      mutate_if(is.factor, as.character) %>%
-      rename(
-        Plant = g
-        , Year = y
-        , Period = t
-        , LoadBlock = lb
-      ) %>%
-      as_tibble()
-  })
-  
-  ## i_heatrate - heat rate (GJ/GWh)
-  i_heatrate <- reactive({
-    rgdx.param(GEMsolveGDX_path(), "i_heatrate") %>%
-      mutate_if(is.factor, as.character) %>%
-      rename(
-        Plant = g
-      ) %>%
-      as_tibble()
-  })
-  
-  ## i_emissionFactors - CO2e emissions, toness CO2/PJ
-  i_emissionFactors <- reactive({
-    rgdx.param(GEMsolveGDX_path(), "i_emissionFactors") %>%
-      mutate_if(is.factor, as.character) %>%
-      rename(
-        Fuel = f
-      ) %>%
-      as_tibble()
-  })
-  
-  ## Solve report
-  output$solveReport <- DT::renderDataTable({
-    
-    req(file.exists(GEMreport_path()))
-    
-    getResults(
-      runName = input$runNameResult
-      , variableName = "solveReport"
-      , colNames = c("Experiments","Experiments2", "Steps", "ScenarioSets", "Variable", "Value")
-    ) %>% 
-      select(-Experiments2) %>% 
-      DT::datatable(options = list(dom = 'lrtip', pageLength = 15))
-    
-  })
+  # In-app reporting
   
   ## Total cost
   output$totalCost <- renderPlot({
     
-    req(file.exists(GEMreport_path()))
-    
-    totalCost <- getResults(
-      runName = input$runNameResult
-      , variableName = "s_TOTALCOST"
-      , colNames = c("Experiments", "Steps", "ScenarioSets", "s_TOTALCOST")
+    validate(
+      need(input$runNameList, "Select at least one run to show plots.")
     )
     
-    totalCost %>% 
-      mutate(Steps = str_to_title(Steps)) %>% 
-      ggplot(aes(reorder(ScenarioSets, s_TOTALCOST), s_TOTALCOST, fill = Steps)) +
-      geom_bar(stat = "identity", alpha = 0.6, width = 0.7) +
+    totalCostDisp <- input$runNameList %>% 
+      map(~read_csv(
+        paste0("Output/", .x, "/Report/csv/totalCostDisp.csv") 
+      ) %>% 
+        mutate(runName = .x)
+      ) %>% 
+      reduce(bind_rows)
+    
+    totalCostDisp %>% 
+      filter(grp == "average") %>% 
+      ggplot(aes(reorder(runName, s_TOTALCOST), s_TOTALCOST)) +
+      geom_bar(stat = "identity", alpha = 0.6, width = 0.7, fill = "steelblue") +
       scale_y_continuous(labels = scales::dollar_format()) +
-      ggthemes::scale_fill_economist() +
-      labs(x = "Scenario sets", y = "Total cost ($million)") + 
-      facet_wrap(~Experiments)
+      labs(x = "Run name", y = "Total cost ($million)") +
+      geom_text(
+        aes(label = paste0(scales::dollar(s_TOTALCOST, accuracy = 1), " mill"), vjust = 1.25)
+        , colour = "white"
+        , size = 5
+      )
     
   })
   
   ## Build schedule - total by year
   output$buildScheduleTotalYr <- renderPlot({
     
-    req(file.exists(GEMreport_path()))
+    validate(
+      need(input$runNameList, "Select at least one run to show plots.")
+    )
     
-    buildScheduleByPlantYr <- getResults(
-      runName = input$runNameResult
-      , variableName = "s_BUILD"
-      , colNames = c("Experiments", "Steps", "ScenarioSets", "Plant", "Year", "s_BUILD")
-    ) %>% 
-      arrange(Experiments, Steps, ScenarioSets, Plant, Year)
-    
-    ## Build schedule total by year
-    buildScheduleTotalYr <- buildScheduleByPlantYr %>%  
-      group_by_at(vars(-c(Plant, s_BUILD))) %>% 
-      summarise(
-        s_BUILD = sum(s_BUILD)
+    buildTotalYrDisp <- input$runNameList %>% 
+      map(~read_csv(
+        paste0("Output/", .x, "/Report/csv/buildTotalYrDisp.csv") 
       ) %>% 
-      ungroup() %>% 
-      group_by_at(vars(-c(Year, s_BUILD))) %>% 
-      mutate(
-        s_BUILD_cumsum = cumsum(s_BUILD)
+        mutate(runName = .x)
       ) %>% 
-      ungroup()
+      reduce(bind_rows)
     
-    buildScheduleTotalYr %>% 
-      ggplot(aes(Year, s_BUILD_cumsum, colour = ScenarioSets, group = ScenarioSets)) +
-      geom_step(alpha = 0.3, lwd = 1) +
+    buildTotalYrDisp %>% 
+      filter(grp == "average") %>% 
+      ggplot(aes(y, s_BUILD_cumsum, colour = runName)) +
+      geom_step(lwd = 1) +
       scale_y_continuous(labels = scales::comma_format()) +
-      scale_x_discrete(breaks = scales::pretty_breaks(5)) +
-      ggthemes::scale_fill_economist() +
-      labs(x = "Scenario sets", y = "Cumulative capacity built (MW)")
-    
-    
+      ggthemes::scale_colour_economist() +
+      labs(x = "Year", y = "Cumulative capacity built (MW)") +
+      facet_wrap(~Experiment) +
+      expand_limits(y = 0)
+
   })
-  
+
   ## Installed capacity by fuel and year
   output$installedCapacityByFuelYr <- renderPlot({
+
+    validate(
+      need(input$runNameList, "Select at least one run to show plots.")
+    )
     
-    req(file.exists(GEMreport_path()))
-    
-    ## Cumulative capacity by plant and year
-    installedCapacityByPlantYr <- getResults(
-      runName = input$runNameResult
-      , variableName = "s_CAPACITY"
-      , colNames = c("Experiments", "Steps", "ScenarioSets", "Plant", "Year", "s_CAPACITY")
-    ) %>% 
-      arrange(Experiments, Steps, ScenarioSets, Plant, Year)
-    
-    ## Installed capacity by fuel and year
-    installedCapacityByFuelYr <- installedCapacityByPlantYr %>% 
-      inner_join(
-        mapg_f()
-        , by = "Plant"
+    capacityByFuelYrDisp <- input$runNameList %>% 
+      map(~read_csv(
+        paste0("Output/", .x, "/Report/csv/capacityByFuelYrDisp.csv") 
       ) %>% 
-      group_by_at(vars(-c(Plant, s_CAPACITY))) %>% 
-      summarise(
-        s_CAPACITY_cumsum = sum(s_CAPACITY)
+        mutate(runName = .x)
       ) %>% 
-      arrange(Experiments, Steps, ScenarioSets, Fuel, Year) %>% 
-      ungroup() 
+      reduce(bind_rows)
     
-    installedCapacityByFuelYr %>%  
-      ggplot(aes(Year, s_CAPACITY_cumsum, fill = Fuel, group = Fuel)) +
+    capacityByFuelYrDisp %>% 
+      filter(grp == "average") %>% 
+      ggplot(aes(y, s_CAPACITY, fill = f, group = f)) +
       geom_area(alpha = 0.6) +
       scale_y_continuous(labels = scales::comma_format()) +
-      scale_x_discrete(breaks = scales::pretty_breaks(5)) +
       ggthemes::scale_fill_economist() +
-      labs(x = "Scenario sets", y = "Installed capacity (MW)") + 
-      facet_wrap(~ScenarioSets)
-    
+      labs(x = "Year", y = "Installed capacity (MW)") + 
+      facet_wrap(~runName + Experiment)
+
   })
   
   ## CO2e emissions by fuel and year
   
   output$emissionsByFuelYear <- renderPlot({
     
-    req(file.exists(GEMreport_path()))
+    validate(
+      need(input$runNameList, "Select at least one run to show plots.")
+    )
     
-    ## CO2e emissions by plant and year
-    emissionsByPlantYear <- s_GEN() %>% 
-      group_by_at(vars(-c(Period, LoadBlock, s_GEN))) %>% 
-      summarise(s_GEN = sum(s_GEN)) %>% 
-      ungroup() %>% 
-      inner_join(
-        i_heatrate()
-        , by = "Plant"
+    generationByFuelYrDisp <- input$runNameList %>% 
+      map(~read_csv(
+        paste0("Output/", .x, "/Report/csv/generationByFuelYrDisp.csv") 
       ) %>% 
-      inner_join(
-        mapg_f()
-        , by = "Plant"
+        mutate(runName = .x)
       ) %>% 
-      inner_join(
-        i_emissionFactors()
-        , by = "Fuel"
-      ) %>% 
-      mutate(
-        CO2e_tonnes = 1e-6 * i_heatrate * s_GEN * i_emissionFactors
-        , CO2e_mill_tonnes = 1e-6 * CO2e_tonnes
-      ) %>% 
-      select(-c(s_GEN, i_heatrate, i_emissionFactors))
+      reduce(bind_rows)
     
-    emissionsByFuelYear <- emissionsByPlantYear %>% 
-      group_by(steps, scenarioSets, scenarios, Fuel, Year) %>% 
-      summarise(CO2e_mill_tonnes = sum(CO2e_mill_tonnes))
-    
-    emissionsByFuelYear %>% 
-      ggplot(aes(Year, CO2e_mill_tonnes, fill = Fuel, group = Fuel)) +
+    generationByFuelYrDisp %>% 
+      filter(grp == "average", CO2e_mill_tonnes > 0) %>% 
+      ggplot(aes(y, CO2e_mill_tonnes, fill = f, group = f)) +
       geom_area(alpha = 0.6) +
       scale_y_continuous(labels = scales::comma_format()) +
-      scale_x_discrete(breaks = scales::pretty_breaks(5)) +
       ggthemes::scale_fill_economist() +
       labs(x = "Year", y = "CO2e emissions (million tonnes)") + 
-      facet_wrap(~scenarioSets)
+      facet_wrap(~runName + Experiment)
+    
+  })
+  
+  ## Generation by fuel and year
+  
+  output$generationByFuelYear <- renderPlot({
+    
+    validate(
+      need(input$runNameList, "Select at least one run to show plots.")
+    )
+    
+    generationByFuelYrDisp <- input$runNameList %>% 
+      map(~read_csv(
+        paste0("Output/", .x, "/Report/csv/generationByFuelYrDisp.csv") 
+      ) %>% 
+        mutate(runName = .x)
+      ) %>% 
+      reduce(bind_rows)
+    
+    generationByFuelYrDisp %>% 
+      filter(grp == "average", CO2e_mill_tonnes > 0) %>% 
+      ggplot(aes(y, s_GEN, fill = f, group = f)) +
+      geom_area(alpha = 0.6) +
+      scale_y_continuous(labels = scales::comma_format()) +
+      ggthemes::scale_fill_economist() +
+      labs(x = "Year", y = "Generation (GWh)") + 
+      facet_wrap(~runName + Experiment)
     
   })
   
