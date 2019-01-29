@@ -17,4 +17,3 @@ Output/*
 !Output/placeholder.txt
 Data/GEMsolveInput/GDX/GEMdata.gdx
 packrat/lib*/
-packrat/src/
