@@ -3,15 +3,15 @@ Integration of GEM with R
 
 ## App screenshots
 
-![](img/home.png)
+![](Resources/img/home.png)
 
 ***
 
-![](img/runGEM.png)
+![](Resources/img/runGEM.png)
 
 ***
 
-![](img/results.png)
+![](Resources/img/results.png)
 
 ***
 
