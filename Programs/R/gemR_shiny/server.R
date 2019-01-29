@@ -3,7 +3,8 @@ function(input, output, session){
   observeEvent(input$updateSelect, {
     
     updateSelectInput(
-      session, "runNameResult",
+      session, 
+      "runNameList",
       label = NULL,
       choices = c("", list.dirs("Output", recursive = FALSE, full.names = FALSE))
     )
