@@ -12,9 +12,13 @@ executeGAMS <- function(GAMS_filepath, GAMS_filename, GAMS_opts){
   setwd(GAMS_filepath)
   
   # Run gms file with gams
-  gams(paste(GAMS_filename, GAMS_opts))
+  x <- gams(paste(GAMS_filename, GAMS_opts))
   
   # Set working directory back
   setwd(old_wd)
+  
+  if(x != 0){
+    stop(paste0("GAMS failed with return code: ", x, ". Please investigate."))
+  }
   
 }
