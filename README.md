@@ -4,8 +4,14 @@
 
 ***Integration of GEM with R***
 
-##### Table of Contents  
-[Software requirements](#software)  
+## Contents  
+- [Software requirements](#software)    
+- [Installation](#installation)  
+- [To run via the shiny app](#shiny)  
+- [To run via R script](#script)  
+- [Creating a demand file](#demand)  
+- [Modifying input files](#modify)  
+- [App screenshots](#screenshots)  
 
 <a name="software"/>
 
@@ -18,6 +24,8 @@
 
 ***
 
+<a name="installation"/>
+
 ## Installation
 
 1. Open a command prompt (or git bash) and navigate to the path you would like to clone the project repository to (e.g. `cd C:\apps\`).
@@ -29,6 +37,8 @@
 
 ***
 
+<a name="shiny"/>
+
 ## To run via the shiny app
 
 1. Use the `Files` tab in RStudio to navigate to `Programs/R/gemR_shiny/`.
@@ -37,6 +47,8 @@
 4. After the run has finished solving, explore the output in the `Results` tab.
 
 ***
+
+<a name="script"/>
 
 ## To run via R script
 
@@ -47,6 +59,8 @@
 5. Plots are output to `Output/<run name>/Reports/plots/`.
 
 ***
+
+<a name="demand"/>
 
 ## Creating a demand file
 
@@ -83,10 +97,14 @@
 
 ***
 
+<a name="modify"/>
+
 ## Modifying input files
 [To come]
 
 ***
+
+<a name="screenshots"/>
 
 ## App screenshots
 
