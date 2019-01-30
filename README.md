@@ -1,8 +1,8 @@
+![](Programs/R/gemR_shiny/www/img/ea-logo.png)
+
 ![](Programs/R/gemR_shiny/www/img/gemR_logo3.png)
 
 ***Integration of GEM with R***
-
-![](Programs/R/gemR_shiny/www/img/ea-logo.png)
 
 ## Software requirements
 
