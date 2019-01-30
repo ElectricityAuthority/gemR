@@ -8,6 +8,7 @@
 [Software requirements](#software)  
 
 <a name="software"/>
+
 ## Software requirements
 
 - [R](https://cran.r-project.org/bin/windows/base/) - current project version: 3.5.1
