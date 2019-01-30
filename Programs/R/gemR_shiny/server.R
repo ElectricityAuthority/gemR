@@ -108,6 +108,21 @@ function(input, output, session){
   
   # In-app reporting
   
+  # Change ggplot shared settings for in-app plots
+  ggplot_themes <- observeEvent(input$runNameList, {
+    
+    theme_set(
+      theme_bw() +
+        theme(
+          axis.text = element_text(size = 12)
+          , axis.title = element_text(size = 15)
+          , legend.text = element_text(size = 12)
+          , legend.title = element_blank()
+        ) 
+    )
+  }
+  )
+  
   ## Total cost
   output$totalCost <- renderPlot({
     
@@ -162,12 +177,12 @@ function(input, output, session){
       facet_wrap(~Experiment) +
       expand_limits(y = 0) +
       scale_x_continuous(breaks = scales::pretty_breaks())
-
+    
   })
-
+  
   ## Installed capacity by fuel and year
   output$installedCapacityByFuelYr <- renderPlot({
-
+    
     validate(
       need(input$runNameList, "Select at least one run to show plots.")
     )
@@ -189,7 +204,7 @@ function(input, output, session){
       labs(x = "Year", y = "Installed capacity (MW)") + 
       facet_wrap(~runName + Experiment) +
       scale_x_continuous(breaks = scales::pretty_breaks())
-
+    
   })
   
   ## CO2e emissions by fuel and year

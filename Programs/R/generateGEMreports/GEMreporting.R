@@ -29,7 +29,6 @@ createGEMreports <- function(runName){
         axis.text = element_text(size = 5)
         , axis.title = element_text(size = 7)
         , legend.text = element_text(size = 5)
-        # , legend.title = element_text(size = 7)
         , legend.title = element_blank()
       )
   )

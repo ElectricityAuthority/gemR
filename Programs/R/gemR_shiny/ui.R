@@ -24,17 +24,6 @@ source("Programs/R/runGEM/generateGEMdata.R")
 source("Programs/R/runGEM/archiveGEMdataGDX.R")
 source("Programs/R/generateGEMreports/GEMreporting.R")
 
-# ggplot shared settings
-theme_set(
-  theme_bw() +
-    theme(
-      axis.text = element_text(size = 9)
-      , axis.title = element_text(size = 11)
-      , legend.text = element_text(size = 9)
-      , legend.title = element_text(size = 11)
-    ) 
-)
-
 navbarPage(
   
   "gemR"
