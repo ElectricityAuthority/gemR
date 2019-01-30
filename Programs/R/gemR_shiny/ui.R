@@ -28,11 +28,11 @@ source("Programs/R/generateGEMreports/GEMreporting.R")
 theme_set(
   theme_bw() +
     theme(
-      axis.text = element_text(size = 8)
-      , axis.title = element_text(size = 10)
-      , legend.text = element_text(size = 8)
-      , legend.title = element_text(size = 10)
-    )
+      axis.text = element_text(size = 9)
+      , axis.title = element_text(size = 11)
+      , legend.text = element_text(size = 9)
+      , legend.title = element_text(size = 11)
+    ) 
 )
 
 navbarPage(
@@ -162,7 +162,7 @@ navbarPage(
                      "Build schedule (total by year)"
                      , plotOutput("buildScheduleTotalYr", height = "800px")
                    )
-
+                   
                    , tabPanel(
                      "Installed capacity (by fuel type and year)"
                      , plotOutput("installedCapacityByFuelYr", height = "800px")
@@ -184,6 +184,30 @@ navbarPage(
              )
              
   )
+  
+  # , footer = column(
+  #   12,
+  #   align = "right",
+  #   style = "bottom: 0; position: absolute;",
+  #   HTML(
+  #     "<div class='footer'>
+  #     <div class='footer-logos'>
+  #     <a href='http://www.ea.govt.nz/'>
+  #     <img src='https://www.emi.ea.govt.nz/Content/images/ea-logo.png' alt='Electricity Authority - We're the regulator of the electricity market in New Zealand.'>
+  #     </a>
+  #     <a class='govt-logo' href='http://newzealand.govt.nz/'>
+  #     <img src='https://www.emi.ea.govt.nz/Content/images/nz_gov_logo.png' alt='New Zealand government services' />
+  #     </a>
+  #     </div>
+  #     <p>
+  #     <span>Electricity Authority: <a href='P: + 64 4 460 8860'>+ 64 4 460 8860</a></span>
+  #     <span>EMI email: <a href='mailto:emi@ea.govt.nz?subject=EMI enquiry: '>emi@ea.govt.nz</a></span>
+  #     </p>
+  #     <p>© 2019 Copyright material on this site is protected by copyright owned by the Electricity Authority or its licensors.</p>
+  #     </div>"
+  #   )
+  # )
+  
   , tags$head(
     tags$style(
       HTML(

@@ -160,7 +160,8 @@ function(input, output, session){
       ggthemes::scale_colour_economist() +
       labs(x = "Year", y = "Cumulative capacity built (MW)") +
       facet_wrap(~Experiment) +
-      expand_limits(y = 0)
+      expand_limits(y = 0) +
+      scale_x_continuous(breaks = scales::pretty_breaks())
 
   })
 
@@ -173,7 +174,7 @@ function(input, output, session){
     
     capacityByFuelYrDisp <- input$runNameList %>% 
       map(~read_csv(
-        paste0("Output/", .x, "/Report/csv/capacityByFuelYrDisp.csv") 
+        paste0("Output/", .x, "/Report/csv/capacityByFuelYrDisp.csv")
       ) %>% 
         mutate(runName = .x)
       ) %>% 
@@ -186,7 +187,8 @@ function(input, output, session){
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
       labs(x = "Year", y = "Installed capacity (MW)") + 
-      facet_wrap(~runName + Experiment)
+      facet_wrap(~runName + Experiment) +
+      scale_x_continuous(breaks = scales::pretty_breaks())
 
   })
   
@@ -200,7 +202,7 @@ function(input, output, session){
     
     generationByFuelYrDisp <- input$runNameList %>% 
       map(~read_csv(
-        paste0("Output/", .x, "/Report/csv/generationByFuelYrDisp.csv") 
+        paste0("Output/", .x, "/Report/csv/generationByFuelYrDisp.csv")
       ) %>% 
         mutate(runName = .x)
       ) %>% 
@@ -213,7 +215,8 @@ function(input, output, session){
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
       labs(x = "Year", y = "CO2e emissions (million tonnes)") + 
-      facet_wrap(~runName + Experiment)
+      facet_wrap(~runName + Experiment) +
+      scale_x_continuous(breaks = scales::pretty_breaks())
     
   })
   
@@ -227,7 +230,7 @@ function(input, output, session){
     
     generationByFuelYrDisp <- input$runNameList %>% 
       map(~read_csv(
-        paste0("Output/", .x, "/Report/csv/generationByFuelYrDisp.csv") 
+        paste0("Output/", .x, "/Report/csv/generationByFuelYrDisp.csv")
       ) %>% 
         mutate(runName = .x)
       ) %>% 
@@ -240,7 +243,8 @@ function(input, output, session){
       scale_y_continuous(labels = scales::comma_format()) +
       ggthemes::scale_fill_economist() +
       labs(x = "Year", y = "Generation (GWh)") + 
-      facet_wrap(~runName + Experiment)
+      facet_wrap(~runName + Experiment) +
+      scale_x_continuous(breaks = scales::pretty_breaks())
     
   })
   
