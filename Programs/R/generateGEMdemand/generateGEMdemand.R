@@ -16,8 +16,6 @@ library(lubridate)
 library(ggthemes)
 library(foreach)
 library(pbapply)
-library(gdxrrw)
-library(DBI)
 library(log4r)
 library(stringr)
 
@@ -33,12 +31,6 @@ set.seed(12345)
 # Relative path to location of GDX creation code
 codePath <- "Programs/R/generateGEMdemand/"
 
-# Read in configuration file
-config <- config::get()
-
-# Set path to GDX API (using path set in configuration file)
-# igdx(config$gams_dir)
-
 # Create time suffix for current run
 time_suffix <- str_replace_all(as.character(now()), "[:punct:]|\\s", "")
 
@@ -48,11 +40,6 @@ scenario_suffix <- "2Region9LB_Standard"
 # Plot 'switches' (i.e. turn on/off plotting)
 plot_ts <- FALSE # Takes approx. 5 minutes to plot all POCs
 plot_LDCs <- FALSE # Takes approx. 13 minutes to plot all POCs
-
-# Create new output directory if it doesn't exist
-# if(!dir.exists(paste0("Programs/R/output"))){
-#   dir.create(paste0("Programs/R/output"))
-# }
 
 # Create archive folder for current run if it doesn't exist
 if(!dir.exists(paste0("Data/Demand/Archive_", time_suffix))){
@@ -68,35 +55,12 @@ logfile(logger) <- paste0("Data/Demand/Archive_", time_suffix, "/log_", time_suf
 # Set the current level of the logger.
 level(logger) <- 'INFO' 
 
-# Connect to SQL (using credentials set in configuration file)
-channel <- dbConnect(
-  odbc::odbc(),
-  .connection_string = paste0(
-    "DRIVER=", config$masqlvmprd$driver, ";",
-    "SERVER=", config$masqlvmprd$server, ";",
-    "UID="   , config$masqlvmprd$user, ";",
-    "PWD="   , config$masqlvmprd$password, ";"
-  )
-)
-
 ###############################################
 ### 3. Read in demand dataset                ##
 ###############################################
 
-source(paste0(codePath, "getDemand.R"))
-
-# Demand by POC
-## This function looks to see if a demand file already exists for the given demand year.
-## If it doesn't, it generates a demand file using data from reconciled consumption.
-demand_by_POC <- getDemand(demand_year = demand_year)
-
-# National demand
-# demand_NZ <- demand %>% 
-#   group_by(dttm, tp, y, mn, d) %>% 
-#   summarise(
-#     MWh = sum(MWh)
-#   ) %>% 
-#   ungroup()
+# Load demand by POC
+demand_by_POC <- read_csv(paste0("Data/Demand/demand_", demand_year, ".csv"))
 
 ###############################################
 ### 4. Plot time series                      ##
@@ -122,11 +86,6 @@ source(paste0(codePath, "generateLDCs.R"))
 ldc_by_block <- generate_LDCs(demand_data = demand_by_POC, byPOC = TRUE)
 
 ldc_by_block_sum <- generate_LDCs_sum(ldc_data = ldc_by_block, byPOC = TRUE)
-
-# # Generate LDCs nationally and assign them to load block
-# ldc_by_block_NZ <- generate_LDCs(demand_data = demand_NZ, byPOC = FALSE)
-# 
-# ldc_by_block_sum_NZ <- generate_LDCs_sum(ldc_data = ldc_by_block_NZ, byPOC = FALSE)
 
 ###############################################
 ### 6. Plot LDCs                             ##
@@ -189,7 +148,8 @@ forecast_by_load_share_blockwt <- forecast_by_load_share_blockwt(
 source(paste0(codePath, "mapPOCStoRegions.R"))
 
 # Read concordance of POCS to region from SQL
-POC_region_concordance <- POC_region_concordance()
+# POC_region_concordance <- POC_region_concordance()
+POC_region_concordance <- read_csv("Data/Geography/mapPOCsToRegions.csv")
 
 # Create mapping of POCs to regions
 forecast_by_region_qtr <- forecast_by_region_qtr(

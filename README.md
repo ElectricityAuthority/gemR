@@ -44,7 +44,37 @@
 ***
 
 ## Creating a demand file
-[To come]
+
+### Requirements (input files)
+
+- Annual demand forecast for reference year (as a CSV). With the following columns:
+  - `dttm` (datetime)
+  - `tp` (trading period)
+  - `poc` (point of connection)
+  - `y` (year)
+  - `mn` (month)
+  - `d` (day)
+  - `MWh` (demand in MWh)
+
+**Note: an example is currently not provided on GitHub as the file is 170MB.**
+
+- Annual energy forecast by POC and year (as a CSV). There is a forecast file currently available in this repository (`Data/Demand/Forecast/annual_energy_forecasts_by_GXP_2012_2050.csv`). The file is currently set up in wide format with the first column being `year` and the remaining columns the POCs. **Note: this file is out-of-date. There are only 180 POCs in this file.**
+
+### Process 
+
+1. Navigate to `Programs/R/generateGEMDemand` and open `generateGEMDemand.R`.
+2. Enter the paramaters at the top of the script for `year`, `forecast file`, `scenario suffix`, etc.
+3. Run through the code step by step:
+  i) Read in the demand CSV.
+  ii) Optionally, create time series plots demand for all POCs.
+  iii) Generate load duration curves by POC (currently hard-coded 9 load blocks).
+  iv) Sum load by POC, month and load block.
+  v) Optionally, plot all LDCs by POC.
+  vi) Compute block weights (the proportion of demand) by POC, month and load block.
+  vii) Compute load share (share of annual load) by POC and month.
+  viii) Apportion annual load forecast to POCs based on block weights and load share.
+  ix) Map POCs to regions using concordance (`Data/Geography/mapPOCsToRegions.csv`) - **Note: this concordance is not complete/up-to-date for all POCs at the moment.**
+  x) Output to CSV - the file is output to `Data/Demand/Archive_<datetime_suffix>`. This file can then be used as an input to `gemR`.
 
 ***
 
