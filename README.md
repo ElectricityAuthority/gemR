@@ -14,11 +14,11 @@
 ## Installation
 
 1. Open a command prompt (or git bash) and navigate to the path you would like to clone the project repository to (e.g. `cd C:\apps\`).
-2. Use `git` to clone the repository by typing the following: `git clone https://github.com/ElectricityAuthority/gemR.git`. This will create a copy of the gemR project in the location you navigated to in step 1.
-3. Navigate to the `gemR` folder and open the project in RStudio (double-click on `gemR.Rproj`).
-4. On loading the project for the first time, there is a check to see if the `packrat` package is installed (`packrat` is being used for package management and reproducibility). If it does not exist, RStudio will attempt to install it. (NOTE: if you have cloned the project to a mapped network drive you may see the error: *cannot set reparse point '...gemR/packrat/lib-R/x86_64-w64-mingw32/3.5.1/base', reason 'Access is denied'*. It is a known issue, just ignore it.)
+2. Use **git** to clone the repository by typing the following: `git clone https://github.com/ElectricityAuthority/gemR.git`. This will create a copy of the `gemR` project in the location you navigated to in step 1.
+3. Navigate to the `gemR` folder and open the project in **RStudio** (double-click on `gemR.Rproj`).
+4. On loading the project for the first time, there is a check to see if the `packrat` package is installed (`packrat` is being used for package management and reproducibility). If it does not exist, **RStudio** will attempt to install it. (**NOTE**: if you have cloned the project to a mapped network drive you may see the error: ***cannot set reparse point '...gemR/packrat/lib-R/x86_64-w64-mingw32/3.5.1/base', reason 'Access is denied***. It is a known issue, just ignore it.)
 5. Restore all packages required by the project using a call to `packrat::restore()`. **This will take a while but will only need to be done once - go grab a coffee!**.
-6. Restart your RStudio session (`Session` > `Restart R`) - **an important step!**
+6. Restart your **RStudio** session (`Session` > `Restart R`) - **an important step!**
 
 ***
 
