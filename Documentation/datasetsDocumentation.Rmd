@@ -2,7 +2,7 @@
 title: "gemR data documentation"
 output: 
   html_document: 
-    df_print: paged
+    keep_md: yes
     theme: simplex
     toc: yes
     toc_float: yes
