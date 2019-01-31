@@ -1,0 +1,198 @@
+---
+title: "gemR data documentation"
+output: 
+  html_document: 
+    df_print: paged
+    theme: simplex
+    toc: yes
+    toc_float: yes
+---
+
+<style>
+    body {font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;}
+    .table {width: 20%}
+    .list-group-item.active, .list-group-item.active:hover, .list-group-item.active:focus {background-color: #00346b; border-color: #00346b; opacity: 0.8;}
+    h1, h2, h3 {color: #00346b;}
+</style>
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, comment = FALSE, warning = FALSE)
+
+options(readr.num_columns = 0)
+
+library(tidyverse)
+
+getCSVPaths <- function(type){
+  
+  folderPath <- paste0("../Data/GEMdataInput/", type)
+  csvPaths <- list.files(folderPath, full.names = TRUE)
+  
+  return(csvPaths)
+  
+}
+
+getCSVInfo <- function(csv_name, type){
+  
+  df <- read_csv(csv_name) %>% 
+    mutate_all(as.character)
+  
+  df_cols <- colnames(df)
+  
+  print( 
+    df_cols[!(df_cols %>% str_detect("i_"))] %>% 
+      knitr::kable(col.names = "Sets")
+  )
+  
+  if(type == "Parameters"){
+    
+    print( 
+      df_cols[df_cols %>% str_detect("i_")] %>% 
+        knitr::kable(col.names = "Parameters")
+    )
+    
+  }
+  
+  # cat("<p style='font-weight:bold'>First 5 rows</p>")
+  # 
+  # print(
+  #   df %>%
+  #     head(5) #%>%
+  #     # knitr::kable()
+  # )
+  
+}
+
+```
+
+## Purpose
+
+To document where **sets**, **subsets**, **parameters** and **setup variables** can be found within the input CSVs.
+
+## Sets
+
+> *./Data/GEMdataInput/Sets*
+
+```{r sets, out.width='100%', results="asis"}
+
+setsCSVs <- getCSVPaths("Sets")
+
+for(csv in setsCSVs){
+  
+  cat(
+    "### "
+    , csv %>% 
+      str_extract("[:alnum:]+.csv") %>% 
+      str_replace(".csv", ""), 
+    " \n"
+    , sep = ""
+  ) 
+  
+  # cat("</br>", "\n")
+  
+  getCSVInfo(csv, type = "Sets")
+  
+  # cat("</br>", "\n \n")
+  
+  cat("***", "\n \n")
+  
+  # cat("</br>", "\n \n")
+  
+}
+
+```
+
+## Subsets
+
+> *./Data/GEMdataInput/Subsets*
+
+```{r subsets, out.width='100%', results="asis"}
+
+subsetsCSVs <- getCSVPaths("Subsets")
+
+for(csv in subsetsCSVs){
+  
+  cat(
+    "### "
+    , csv %>% 
+      str_extract("[:alnum:]+.csv") %>% 
+      str_replace(".csv", ""), 
+    " \n"
+    , sep = ""
+  ) 
+  
+  # cat("</br>", "\n")
+  
+  getCSVInfo(csv, type = "Sets")
+  
+  # cat("</br>", "\n \n")
+  
+  cat("***", "\n \n")
+  
+  # cat("</br>", "\n \n")
+  
+}
+
+```
+
+## Parameters
+
+> *./Data/GEMdataInput/Parameters*
+
+```{r params, out.width='100%', results="asis"}
+
+paramsCSVs <- getCSVPaths("Parameters")
+
+for(csv in paramsCSVs){
+  
+  cat(
+    "### "
+    , csv %>% 
+      str_extract("[:alnum:]+.csv") %>% 
+      str_replace(".csv", "")
+    , " \n"
+    , sep = ""
+  ) 
+  
+  # cat("</br>", "\n")
+  
+  getCSVInfo(csv, type = "Parameters")
+  
+  # cat("</br>", "\n \n")
+  
+  cat("***", "\n \n")
+  
+  # cat("</br>", "\n \n")
+  
+}
+
+```
+
+## Setup variables
+
+### Globals
+
+> *./Data/Setup/globalVariables.csv*
+
+```{r globals}
+
+read_csv("../Data/Setup/globalVariables.csv")
+
+```
+
+</br>
+
+<hr>
+
+
+### Scalars
+
+> *./Data/Setup/scalarVariables.csv*
+
+```{r scalars}
+
+read_csv("../Data/Setup/scalarVariables.csv")
+
+```
+
+

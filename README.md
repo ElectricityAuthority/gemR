@@ -10,7 +10,7 @@
 - [To run via the shiny app](#shiny)  
 - [To run via R script](#script)  
 - [Creating a demand file](#demand)  
-- [Modifying input files](#modify)  
+- [Input files](#input)  
 - [App screenshots](#screenshots)  
 
 <a name="software"/>
@@ -77,7 +77,7 @@
 
 **Note: an example is currently not provided on GitHub as the file is 170MB.**
 
-- Annual energy forecast by POC and year (as a CSV). There is a forecast file currently available in this repository (`Data/Demand/Forecast/annual_energy_forecasts_by_GXP_2012_2050.csv`). The file is currently set up in wide format with the first column being `year` and the remaining columns the POCs. **Note: this file is out-of-date. There are only 180 POCs in this file.**
+- Annual electricity demand by POC and year (as a CSV). There is a forecast file currently available in this repository (`Data/Demand/Forecast/annual_energy_forecasts_by_GXP_2012_2050.csv`). The file is currently set up in wide format with the first column being `year` and the remaining columns the POCs. **Note: this file is out-of-date. There are only 180 POCs in this file.**
 
 ### Process 
 
@@ -97,10 +97,15 @@
 
 ***
 
-<a name="modify"/>
+<a name="input"/>
 
-## Modifying input files
-[To come]
+## Input files
+
+**Sets**, **subsets** and **parameter** input CSVs can be found in the [GEMdataInput](Data/GEMdataInput) folder. 
+
+**Setup variables** (`$setglobals` and scalar variables) can be found in the [Setup](Data/Setup) folder.
+
+For more information see the following [documentation](Documentation/datasetsDocumentation.html).
 
 ***
 
