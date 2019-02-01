@@ -105,7 +105,7 @@
 
 **Setup variables** (`$setglobals` and scalar variables) can be found in the [Setup](Data/Setup) folder.
 
-For more information see the following [documentation](Documentation/datasetsDocumentation.html).
+For more information see the following [documentation](https://electricityauthority.github.io/gemR/Documentation/datasetsDocumentation.html).
 
 ***
 
