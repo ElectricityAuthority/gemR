@@ -4,10 +4,6 @@
 
 ***Integration of GEM with R***
 
-<style>
-  img {padding-top: 1%;}
-</style>
-
 ## Contents  
 - [Software requirements](#software)    
 - [Installation](#installation)  
