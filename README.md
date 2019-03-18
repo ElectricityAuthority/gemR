@@ -11,6 +11,7 @@
 - [To run via R script](#script)  
 - [Creating a demand file](#demand)  
 - [Input files](#input)  
+- [To do](#todo)
 - [App screenshots](#screenshots)  
 
 <a name="software"/>
@@ -106,6 +107,21 @@
 **Setup variables** (`$setglobals` and scalar variables) can be found in the [Setup](Data/Setup) folder.
 
 For more information see the following [documentation](https://electricityauthority.github.io/gemR/Documentation/datasetsDocumentation.html).
+
+***
+
+<a name="todo"/>
+
+## To do
+
+- fix code that generates the loss-related parameters (slope, intercept, etc.)
+- revisit GEMsolve code
+- revisit model constraints
+- integrate gemR with the DOASA hydro-scheduling model
+- add validation and unit tests (use the *expect_* functions from the *testthat* package)
+- set up logger
+- update demand forecast data
+- test using 18 region version
 
 ***
 
