@@ -7,7 +7,13 @@
 ###############################################
 ### 1. Load libraries                        ##
 ###############################################
-library(tidyverse)
+# library(tidyverse)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+library(tibble)
 library(gdxtools)
 library(gdxrrw)
 library(readtext)

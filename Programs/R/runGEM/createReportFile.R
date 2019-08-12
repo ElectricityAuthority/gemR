@@ -1,5 +1,5 @@
 ### Create reporting dataset for run (seperate from plotting!)
-library(tidyverse)
+# library(tidyverse)
 library(gdxtools)
 library(rlist)
 
@@ -49,7 +49,7 @@ createReportFile <- function(runName){
     for(i in 1:length(reportParams)){
       
       repList[[reportParams[i]]] <- repGDX[reportParams[i]] %>% 
-        rename_at(vars(value), funs(reportParams[i]))
+        rename_at(vars(value), function(x) reportParams[i])
       
     }
     

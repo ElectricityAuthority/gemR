@@ -1,14 +1,25 @@
 # library(infuser)
-library(tidyverse)
+# library(tidyverse)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+library(tibble)
 library(readtext)
 library(shiny)
 library(shinythemes)
-# library(highcharter)
+library(purrr)
 library(gdxtools)
 library(gdxrrw)
 library(rlist)
 
-setwd(rstudioapi::getActiveProject())
+# Force working directory to be the project root (if it isn't already).
+# This allows for the running of the app via the 'Run App' button in 
+# RStudio - making source paths etc relative to the project root.
+if(getwd() != rstudioapi::getActiveProject()){
+  setwd(rstudioapi::getActiveProject())
+}
 
 # Turn off messages from readr
 options(readr.num_columns = 0)

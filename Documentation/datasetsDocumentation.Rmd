@@ -21,7 +21,9 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, comment = FALSE, warning = 
 
 options(readr.num_columns = 0)
 
-library(tidyverse)
+# library(tidyverse)
+library(readr)
+library(dplyr)
 
 getCSVPaths <- function(type){
   

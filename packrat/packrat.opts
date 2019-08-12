@@ -7,9 +7,7 @@ external.packages:
 local.repos: localPackages
 load.external.packages.on.startup: TRUE
 ignored.packages: 
-ignored.directories:
-    data
-    inst
+ignored.directories: Programs/R/working
 quiet.package.installation: TRUE
 snapshot.recommended.packages: FALSE
 snapshot.fields:
