@@ -114,7 +114,7 @@ For more information see the following [documentation](https://electricityauthor
 
 ## To do
 
-- fix code that generates the loss-related parameters (slope, intercept, etc.)
+- ~fix code that generates the loss-related parameters (slope, intercept, etc.)~
 - revisit GEMsolve code
 - revisit model constraints
 - integrate gemR with the DOASA hydro-scheduling model

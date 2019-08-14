@@ -1589,69 +1589,63 @@ generateGEMdata <- function(
     )
   
   ### lossSlopeRMIP(r,rr,n)
-  params$lossSlopeRMIP <- params$lossSlopeMIP %>% 
-    filter(
-      ps == "initial"
-    ) %>% 
-    select(r, rr, n, value)
+  # params$lossSlopeRMIP <- params$lossSlopeMIP %>% 
+  #   filter(
+  #     ps == "initial"
+  #   ) %>% 
+  #   select(r, rr, n, value)
   
   ## Overwrite some of the above - pCap, pLoss, lossIntercept and both lossSlopeMIP and lossSlopeRMIP - 
   ##   if integerization of BTX is not to be employed
   
-  # if(scalarVars$txLossesRMIP){
-  #   
-  #   ## Accept values from above for the initial state, and populate slopes for all states using initial state slopes
-  #   pCap <- pCap %>% 
-  #     mutate(
-  #       value = ifelse(ps != "initial", 0, value)
-  #     )
-  #   
-  #   pLoss <- pLoss %>% 
-  #     mutate(
-  #       value = ifelse(ps != "initial", 0, value)
-  #     )
-  #   
-  #   lossIntercept <- lossIntercept %>% 
-  #     mutate(
-  #       value = ifelse(ps != "initial", 0, value)
-  #     )
-  #   
-  #   ### lossSlopeRMIP(r,rr,n)
-  #   params$lossSlopeRMIP <- params$lossSlopeMIP %>% 
-  #     filter(
-  #       ps == "initial"
-  #     ) %>% 
-  #     select(r, rr, n, value)
-  #   
-  #   ## Now loop over paths, states and loss tranches, iteratively computing pCap, pLoss and lossIntercept
-  #   pCap <- pCap %>% 
-  #     mutate(
-  #       # Create lagged 'n' for joining to other tables
-  #       n_lagged = paste0("n", as.numeric(str_extract(n, "[:digit:]+")) - 1)
-  #     ) %>% 
-  #     left_join(
-  #       lossSlopeRMIP %>% 
-  #         rename(
-  #           lossSlopeRMIP = value
-  #         )
-  #       , by = c("r", "rr", "n_lagged" = "n")
-  #     ) %>% 
-  #     left_join(
-  #       i_txResistance %>% 
-  #         rename(
-  #           i_txResistance = value
-  #         )
-  #       , by = c("r", "rr", "ps")
-  #     ) %>% 
-  #     left_join(
-  #       lossIntercept %>% 
-  #         rename(
-  #           lossIntercept = value
-  #         )
-  #       , by = c("r", "rr", "ps", "n" = "n")
-  #     )
-  #   
-  # }
+  if(scalarVars$txLossesRMIP){
+
+    ## Accept values from above for the initial state, and populate slopes for all states using initial state slopes
+    params$pCap <- params$pCap %>% 
+      select(-value) %>% 
+      inner_join(
+        params$pCap %>% 
+          filter(ps == "initial") %>% 
+          select(-ps)
+        , by = c("r", "rr", "n")
+      )
+    
+    params$pLoss <- params$pLoss %>% 
+      select(-value) %>% 
+      inner_join(
+        params$pLoss %>% 
+          filter(ps == "initial") %>% 
+          select(-ps)
+        , by = c("r", "rr", "n")
+      )
+    
+    params$lossIntercept <- params$lossIntercept %>% 
+      select(-value) %>% 
+      inner_join(
+        params$lossIntercept %>% 
+          filter(ps == "initial") %>% 
+          select(-ps)
+        , by = c("r", "rr", "n")
+      )
+
+    ### lossSlopeRMIP(r,rr,n)
+    params$lossSlopeRMIP <- params$lossSlopeMIP %>%
+      filter(
+        ps == "initial"
+      ) %>%
+      select(r, rr, n, value)
+    
+    params$lossSlopeMIP <- params$lossSlopeMIP %>% 
+      select(-value) %>% 
+      inner_join(
+        params$lossSlopeMIP %>% 
+          filter(ps == "initial") %>% 
+          select(-ps)
+        , by = c("r", "rr", "n")
+      )
+   
+
+  }
   
   # f) Reserve energy data
   
