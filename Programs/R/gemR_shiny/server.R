@@ -19,14 +19,14 @@ function(input, output, session){
       ###############################################
       ### Set up folders                           ##
       ###############################################
-      incProgress(0.1, message = "Settuping up folders...")
+      incProgress(0.1, message = "Setting up folders...")
       
       setupFolders(runName = input$runName)
       
       ###############################################
       ### Generate GEMsetup include file from CSV  ##
       ###############################################
-      incProgress(0.1, message = "Running GEMsetup...")
+      incProgress(0.1, message = "Running GEM setup...")
       
       generateGEMsetup(
         runName = input$runName
@@ -76,7 +76,7 @@ function(input, output, session){
       ###############################################
       incProgress(0.3
                   , message = "Running GEM solve..."
-                  , detail = "This may take a while..."
+                  # , detail = "This may take a while..."
       )
       
       executeGAMS(

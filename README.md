@@ -18,9 +18,9 @@
 
 ## Software requirements
 
-- [R](https://cran.r-project.org/bin/windows/base/) - current project version: 3.5.1
+- [R](https://cran.r-project.org/bin/windows/base/) - current project version: 3.6.0
 - [RStudio](https://www.rstudio.com/products/rstudio/download/)
-- [GAMS](https://www.gams.com/download/) - current project version: 25.1.3
+- [GAMS](https://www.gams.com/download/) - current project version: 25.3
 - [git](https://git-scm.com/downloads) - this is more of a nice-to-have as you can still download the project as a zip file from GitHub.
 
 ***
@@ -112,16 +112,17 @@ For more information see the following [documentation](https://electricityauthor
 
 <a name="todo"/>
 
-## To do
+## TODO
 
 - ~fix code that generates the loss-related parameters (slope, intercept, etc.)~
 - revisit GEMsolve code
 - revisit model constraints
 - integrate gemR with the DOASA hydro-scheduling model
 - add validation and unit tests (use the *expect_* functions from the *testthat* package)
-- set up logger
+- set up logger (using the `log4r` package)
 - update demand forecast data
 - test using 18 region version
+- move CSS from bottom of `ui.R` into css file.
 
 ***
 
